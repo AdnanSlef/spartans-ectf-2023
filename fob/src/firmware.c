@@ -133,28 +133,6 @@ int main(void)
   // Initialize UART
   uart_init();
 
-#ifdef EXAMPLE_AES
-  // -------------------------------------------------------------------------
-  // example encryption using tiny-AES-c
-  // -------------------------------------------------------------------------
-  struct AES_ctx ctx;
-  uint8_t key[16] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7,
-                     0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
-  uint8_t plaintext[16] = "0123456789abcdef";
-
-  // initialize context
-  AES_init_ctx(&ctx, key);
-
-  // encrypt buffer (encryption happens in place)
-  AES_ECB_encrypt(&ctx, plaintext);
-
-  // decrypt buffer (decryption happens in place)
-  AES_ECB_decrypt(&ctx, plaintext);
-  // -------------------------------------------------------------------------
-  // end example
-  // -------------------------------------------------------------------------
-#endif
-
   // Initialize board link UART
   setup_board_link();
 
@@ -162,11 +140,6 @@ int main(void)
   GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
   GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_4MA,
                    GPIO_PIN_TYPE_STD_WPU);
-
-  // Change LED color: white
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1); // r
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2); // b
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3); // g
 
   // Declare a buffer for reading and writing to UART
   uint8_t uart_buffer[10];

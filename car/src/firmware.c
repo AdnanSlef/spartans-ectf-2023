@@ -73,11 +73,6 @@ int main(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-  // Change LED color: red; TODO remove coloring if allowed
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1); // r
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0); // b
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0); // g
-
   // Initialize UART peripheral
   uart_init();
 
@@ -165,10 +160,5 @@ void startCar(void) {
 
     uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
   }
-
-  // Change LED color: green
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0); // r
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0); // b
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3); // g
 }
 
