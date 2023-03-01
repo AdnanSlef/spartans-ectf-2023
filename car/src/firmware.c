@@ -44,14 +44,18 @@ typedef struct {//TODO
   uint8_t data[64];
 } CHALLENGE;
 
+typedef struct {//TODO
+  uint8_t data[64];
+} RESPONSE;
+
 /*** Macro Definitions ***/
 // Definitions for unlock message location in EEPROM
 #define UNLOCK_EEPROM_LOC 0x7C0
 #define UNLOCK_EEPROM_SIZE 64
 
 /*** Function definitions ***/
-// Core functions - unlockCar and startCar
-void unlockCar(void);
+// Core functions - tryUnlock and startCar
+void tryUnlock(void);
 void startCar(void);
 
 // Helper functions - sending ack messages
@@ -86,60 +90,49 @@ int main(void) {
 
   while (true) {
 
-    unlockCar();
+    tryUnlock();
   }
 }
 
 /**
  * @brief Function that handles unlocking of car
  */
-void unlockCar(void) {
+void tryUnlock(void) {
+
+  CHALLENGE challenge;
+  RESPONSE response;
+
   // Make sure the fob is requesting an unlock
-  if(!fob_requests_unlock()) {
-    return;
-  }
-  // Create a message struct variable for receiving data
+  fob_requests_unlock() &&
 
-  MESSAGE_PACKET message;
-  uint8_t buffer[256];
-  message.buffer = buffer;
+  // Generate a challenge
+  gen_challenge(&challenge) &&
 
-  // Receive packet with some error checking
-  receive_board_message_by_type(&message, UNLOCK_MAGIC);
+  // Send challenge to fob
+  send_challenge(&challenge) &&
 
-  // Pad payload to a string
-  message.buffer[message.message_len] = 0;
+  // Get response within 1 second
+  get_response(&response) &&
 
-  // If the data transfer is the password, unlock
-  if (!strcmp((char *)(message.buffer), (char *)pass)) {
-    uint8_t eeprom_message[64];
-    // Read last 64B of EEPROM
-    EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
-               UNLOCK_EEPROM_SIZE);
+  // Check whether the response to the challenge was valid
+  verify_response(&challenge, &response) &&
+  
+  // Unlock the car
+  unlockCar() &&
 
-    // Get flag for boot reference design, and replace end of unlock message
-    // YOU ARE NOT ALLOWED TO DO THIS IN YOUR DESIGN
-    char flag[28];
-    for (int i = 0; aseiFuengleR[i]; i++) {
-        flag[i] = deobfuscate(aseiFuengleR[i], djFIehjkklIH[i]);
-        flag[i+1] = 0;
-    }
+  // Start the car
+  startCar();
+}
 
-    int j = UNLOCK_EEPROM_SIZE - 28;
-    for (int i = 0; i < 28; i++) {
-        eeprom_message[j] = (uint8_t)(flag[i]);
-        j++;
-    }
+void unlockCar() {
+  uint8_t eeprom_message[64];
 
-    // Write out full flag if applicable
-    uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+  // Load Unlock Success Message
+  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
+              UNLOCK_EEPROM_SIZE);
 
-    sendAckSuccess();
-
-    startCar();
-  } else {
-    sendAckFailure();
-  }
+  // Display Unlock Success Message
+  uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
 }
 
 /**
