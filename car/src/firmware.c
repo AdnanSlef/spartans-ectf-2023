@@ -127,6 +127,8 @@ bool gen_challenge(CHALLENGE *challenge) {
 }
 
 bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
+  //verify the challenge-response response
+  //verify each of the feature signatures
   return false;
 }
 
