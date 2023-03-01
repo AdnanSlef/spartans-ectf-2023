@@ -56,7 +56,7 @@ void setup_board_link(void) {
  * @param message pointer to message to send
  * @return uint32_t the number of bytes sent
  */
-uint32_t send_board_message(MESSAGE_PACKET *message) {
+uint32_t send_board_message(MESSAGE_PACKET *message) {//TODO delete, just a model for send
   UARTCharPut(FOB_UART, message->magic);
   UARTCharPut(FOB_UART, message->message_len);
 
@@ -73,7 +73,7 @@ uint32_t send_board_message(MESSAGE_PACKET *message) {
  * @param message pointer to message where data will be received
  * @return uint32_t the number of bytes received - 0 for error
  */
-uint32_t receive_board_message(MESSAGE_PACKET *message) {
+uint32_t receive_board_message(MESSAGE_PACKET *message) { //TODO delete or adapt, just a model for receive
   message->magic = (uint8_t)UARTCharGet(FOB_UART);
 
   if (message->magic == 0) {
@@ -85,21 +85,6 @@ uint32_t receive_board_message(MESSAGE_PACKET *message) {
   for (int i = 0; i < message->message_len; i++) {
     message->buffer[i] = (uint8_t)UARTCharGet(FOB_UART);
   }
-
-  return message->message_len;
-}
-
-/**
- * @brief Function that retreives messages until the specified message is found
- *
- * @param message pointer to message where data will be received
- * @param type the type of message to receive
- * @return uint32_t the number of bytes received
- */
-uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
-  do {
-    receive_board_message(message);
-  } while (message->magic != type);
 
   return message->message_len;
 }
