@@ -40,6 +40,14 @@ typedef struct {
   uint8_t features[NUM_FEATURES];
 } FEATURE_DATA;
 
+typedef struct {//TODO
+  uint8_t data[64];
+} CHALLENGE;
+
+typedef struct {//TODO
+  uint8_t data[64];
+} RESPONSE;
+
 /*** Macro Definitions ***/
 // Definitions for unlock message location in EEPROM
 #define UNLOCK_EEPROM_LOC 0x7C0
