@@ -82,7 +82,7 @@ int main(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-  // Change LED color: red
+  // Change LED color: red; TODO remove coloring if allowed
   GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1); // r
   GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0); // b
   GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0); // g
@@ -105,6 +105,8 @@ int main(void) {
 void tryUnlock(void) {
   CHALLENGE challenge;
   RESPONSE response;
+
+  //TODO zero out challenge and response, just in case;
 
   // Make sure the fob is requesting an unlock
   fob_requests_unlock() &&
