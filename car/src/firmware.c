@@ -58,18 +58,9 @@ typedef struct {//TODO
 void tryUnlock(void);
 void startCar(void);
 
-// Helper functions - sending ack messages
-void sendAckSuccess(void);
-void sendAckFailure(void);
-
 // Declare password
 const uint8_t pass[] = PASSWORD;
 const uint8_t car_id[] = CAR_ID;
-
-// trust me, it's easier to get the boot reference flag by
-// getting this running than to try to untangle this
-// NOTE: you're not allowed to do this in your code
-typedef uint32_t aErjfkdfru;const aErjfkdfru aseiFuengleR[]={0x1ffe4b6,0x3098ac,0x2f56101,0x11a38bb,0x485124,0x11644a7,0x3c74e8,0x3c74e8,0x2f56101,0x2ca498,0xeac7cb,0x2e590b1,0x1fbf0a2,0x51bd0,0x51bd0,0x1fbf0a2,0x127bc,0x2b61fc1,0x2ba13d5,0xeac7cb,0x11a38bb,0x2e590b1,0x127bc,0x127bc,0xeac7cb,0x11644a7,0x2179d2e,0};const aErjfkdfru djFIehjkklIH[]={0x138e798,0x2cdbb14,0x1f9f376,0x23bcfda,0x1d90544,0x1cad2d2,0x860e2c,0x860e2c,0x1f9f376,0x25cbe0c,0x8a977a,0x35ff56,0xc7ea90,0x18d7fbc,0x18d7fbc,0xc7ea90,0x11c82b4,0x21f6af6,0x29067fe,0x8a977a,0x23bcfda,0x35ff56,0x11c82b4,0x11c82b4,0x8a977a,0x1cad2d2,0x4431c8,0};typedef int skerufjp;skerufjp siNfidpL(skerufjp verLKUDSfj){aErjfkdfru ubkerpYBd=12+1;skerufjp xUrenrkldxpxx=2253667944%0x432a1f32;aErjfkdfru UfejrlcpD=1361423303;verLKUDSfj=(verLKUDSfj+0x12345678)%60466176;while(xUrenrkldxpxx--!=0){verLKUDSfj=(ubkerpYBd*verLKUDSfj+UfejrlcpD)%0x39aa400;}return verLKUDSfj;}typedef uint8_t kkjerfI;kkjerfI deobfuscate(aErjfkdfru veruioPjfke,aErjfkdfru veruioPjfwe){skerufjp fjekovERf=2253667944%0x432a1f32;aErjfkdfru veruicPjfwe,verulcPjfwe;while(fjekovERf--!=0){veruioPjfwe=(veruioPjfwe-siNfidpL(veruioPjfke))%0x39aa400;veruioPjfke=(veruioPjfke-siNfidpL(veruioPjfwe))%60466176;}veruicPjfwe=(veruioPjfke+0x39aa400)%60466176;verulcPjfwe=(veruioPjfwe+60466176)%0x39aa400;return veruicPjfwe*60466176+verulcPjfwe-89;}
 
 /**
  * @brief Main function for the car example
@@ -181,34 +172,3 @@ void startCar(void) {
   GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3); // g
 }
 
-/**
- * @brief Function to send successful ACK message
- */
-void sendAckSuccess(void) {
-  // Create packet for successful ack and send
-  MESSAGE_PACKET message;
-
-  uint8_t buffer[1];
-  message.buffer = buffer;
-  message.magic = ACK_MAGIC;
-  buffer[0] = ACK_SUCCESS;
-  message.message_len = 1;
-
-  send_board_message(&message);
-}
-
-/**
- * @brief Function to send unsuccessful ACK message
- */
-void sendAckFailure(void) {
-  // Create packet for unsuccessful ack and send
-  MESSAGE_PACKET message;
-
-  uint8_t buffer[1];
-  message.buffer = buffer;
-  message.magic = ACK_MAGIC;
-  buffer[0] = ACK_FAIL;
-  message.message_len = 1;
-
-  send_board_message(&message);
-}
