@@ -26,7 +26,7 @@
 #define PAIR_MAGIC 0x55
 #define UNLOCK_MAGIC 0x56
 #define START_MAGIC 0x57
-#define BOARD_UART ((uint32_t)UART1_BASE)
+#define FOB_UART ((uint32_t)UART1_BASE)
 
 /**
  * @brief Structure for message between boards

@@ -42,7 +42,7 @@ void setup_board_link(void) {
 
   // Configure the UART for 115,200, 8-N-1 operation.
   UARTConfigSetExpClk(
-      BOARD_UART, SysCtlClockGet(), 115200,
+      FOB_UART, SysCtlClockGet(), 115200,
       (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
   while (UARTCharsAvail(BOARD_UART)) {
@@ -102,4 +102,13 @@ uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
   } while (message->magic != type);
 
   return message->message_len;
+}
+
+/**
+ * @brief Function that determines whether the fob is requesting an unlock
+ *
+ * @return bool true if fob is requesting unlock, false otherwise
+ */
+bool fob_requests_unlock() {
+  return uart_avail(FOB_UART) && uart_readb(FOB_UART)==UNLOCK_MAGIC;
 }

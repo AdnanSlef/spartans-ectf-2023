@@ -40,6 +40,10 @@ typedef struct {
   uint8_t features[NUM_FEATURES];
 } FEATURE_DATA;
 
+typedef struct {//TODO
+  uint8_t data[64];
+} CHALLENGE;
+
 /*** Macro Definitions ***/
 // Definitions for unlock message location in EEPROM
 #define UNLOCK_EEPROM_LOC 0x7C0
@@ -90,7 +94,12 @@ int main(void) {
  * @brief Function that handles unlocking of car
  */
 void unlockCar(void) {
+  // Make sure the fob is requesting an unlock
+  if(!fob_requests_unlock()) {
+    return;
+  }
   // Create a message struct variable for receiving data
+
   MESSAGE_PACKET message;
   uint8_t buffer[256];
   message.buffer = buffer;
