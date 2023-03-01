@@ -92,7 +92,9 @@ void tryUnlock(void) {
   CHALLENGE challenge;
   RESPONSE response;
 
-  //TODO zero out challenge and response, just in case;
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge));
+  memset(&response, 0, sizeof(response));
 
   // Make sure the fob is requesting an unlock
   fob_requests_unlock() &&
@@ -116,21 +118,34 @@ void tryUnlock(void) {
   startCar();
 }
 
-void unlockCar() {
+int gen_challenge(CHALLENGE *challenge) {
+  
+}
+
+
+
+bool unlockCar() {
   uint8_t eeprom_message[64];
 
+  // Zero out eeprom message
+  memset(&eeprom_message, 0, sizeof(eeprom_message));
+
   // Load Unlock Success Message
-  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
-              UNLOCK_EEPROM_SIZE);
+  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, UNLOCK_EEPROM_SIZE);
 
   // Display Unlock Success Message
   uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+
+  // Zero out eeprom message
+  memset(&eeprom_message, 0, sizeof(eeprom_message));
+
+  return true;
 }
 
 /**
  * @brief Function that handles starting of car - feature list
  */
-void startCar(void) {
+int startCar(void) {
   // Create a message struct variable for receiving data
   MESSAGE_PACKET message;
   uint8_t buffer[256];
