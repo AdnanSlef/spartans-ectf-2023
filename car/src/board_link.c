@@ -100,6 +100,13 @@ bool fob_requests_unlock() {
 }
 
 /**
+ * @brief TODO implement
+*/
+bool send_challenge(CHALLENGE *challenge) {
+  return false;
+}
+
+/**
  * @brief Gets a response from the fob to the challenge that was sent
  * Times out after 1 second of 
  *
@@ -109,5 +116,5 @@ bool fob_requests_unlock() {
 bool get_response(RESPONSE *response) {
   //read a defined number of bytes, but only for 1 second
   //TODO timeout after 1 second, returning false
-
+  return false;
 }

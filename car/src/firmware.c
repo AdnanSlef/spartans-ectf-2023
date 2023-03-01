@@ -110,6 +110,10 @@ void tryUnlock(void) {
 
   // Check whether the response to the challenge was valid
   verify_response(&challenge, &response) &&
+
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge)) &&
+  memset(&response, 0, sizeof(response)) &&
   
   // Unlock the car
   unlockCar() &&
@@ -118,11 +122,13 @@ void tryUnlock(void) {
   startCar();
 }
 
-int gen_challenge(CHALLENGE *challenge) {
-  
+bool gen_challenge(CHALLENGE *challenge) {
+  return false;
 }
 
-
+bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
+  return false;
+}
 
 bool unlockCar() {
   uint8_t eeprom_message[64];
