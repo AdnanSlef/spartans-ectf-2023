@@ -128,6 +128,17 @@ void tryUnlock(void) {
   startCar();
 }
 
+void unlockCar() {
+  uint8_t eeprom_message[64];
+
+  // Load Unlock Success Message
+  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
+              UNLOCK_EEPROM_SIZE);
+
+  // Display Unlock Success Message
+  uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+}
+
 /**
  * @brief Function that handles starting of car - feature list
  */
