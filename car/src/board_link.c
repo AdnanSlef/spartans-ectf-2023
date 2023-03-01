@@ -113,3 +113,16 @@ uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
 bool fob_requests_unlock() {
   return uart_avail(FOB_UART) && uart_readb(FOB_UART)==UNLOCK_MAGIC;
 }
+
+/**
+ * @brief Gets a response from the fob to the challenge that was sent
+ * Times out after 1 second of 
+ *
+ * @param response [out] where to store the gathered response
+ * @return bool true if fob is requesting unlock, false otherwise
+ */
+bool get_response(RESPONSE *response) {
+  //read a defined number of bytes, but only for 1 second
+  //TODO timeout after 1 second, returning false
+
+}
