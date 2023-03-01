@@ -45,8 +45,8 @@ void setup_board_link(void) {
       FOB_UART, SysCtlClockGet(), 115200,
       (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
-  while (UARTCharsAvail(BOARD_UART)) {
-    UARTCharGet(BOARD_UART);
+  while (UARTCharsAvail(FOB_UART)) {
+    UARTCharGet(FOB_UART);
   }
 }
 
@@ -57,11 +57,11 @@ void setup_board_link(void) {
  * @return uint32_t the number of bytes sent
  */
 uint32_t send_board_message(MESSAGE_PACKET *message) {
-  UARTCharPut(BOARD_UART, message->magic);
-  UARTCharPut(BOARD_UART, message->message_len);
+  UARTCharPut(FOB_UART, message->magic);
+  UARTCharPut(FOB_UART, message->message_len);
 
   for (int i = 0; i < message->message_len; i++) {
-    UARTCharPut(BOARD_UART, message->buffer[i]);
+    UARTCharPut(FOB_UART, message->buffer[i]);
   }
 
   return message->message_len;
@@ -74,16 +74,16 @@ uint32_t send_board_message(MESSAGE_PACKET *message) {
  * @return uint32_t the number of bytes received - 0 for error
  */
 uint32_t receive_board_message(MESSAGE_PACKET *message) {
-  message->magic = (uint8_t)UARTCharGet(BOARD_UART);
+  message->magic = (uint8_t)UARTCharGet(FOB_UART);
 
   if (message->magic == 0) {
     return 0;
   }
 
-  message->message_len = (uint8_t)UARTCharGet(BOARD_UART);
+  message->message_len = (uint8_t)UARTCharGet(FOB_UART);
 
   for (int i = 0; i < message->message_len; i++) {
-    message->buffer[i] = (uint8_t)UARTCharGet(BOARD_UART);
+    message->buffer[i] = (uint8_t)UARTCharGet(FOB_UART);
   }
 
   return message->message_len;
@@ -111,4 +111,16 @@ uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
  */
 bool fob_requests_unlock() {
   return uart_avail(FOB_UART) && uart_readb(FOB_UART)==UNLOCK_MAGIC;
+}
+
+/**
+ * @brief Gets a response from the fob to the challenge that was sent
+ * Times out after 1 second of 
+ *
+ * @return bool true if fob is requesting unlock, false otherwise
+ */
+bool get_response() {
+  //read a defined number of bytes, but only for 1 second
+  //TODO timeout after 1 second, returning false
+
 }
