@@ -54,8 +54,8 @@ typedef struct {//TODO
 #define UNLOCK_EEPROM_SIZE 64
 
 /*** Function definitions ***/
-// Core functions - unlockCar and startCar
-void unlockCar(void);
+// Core functions - tryUnlock and startCar
+void tryUnlock(void);
 void startCar(void);
 
 // Helper functions - sending ack messages
@@ -95,55 +95,37 @@ int main(void) {
 
   while (true) {
 
-    unlockCar();
+    tryUnlock();
   }
 }
 
 /**
  * @brief Function that handles unlocking of car
  */
-void unlockCar(void) {
-  // Create a message struct variable for receiving data
-  MESSAGE_PACKET message;
-  uint8_t buffer[256];
-  message.buffer = buffer;
+void tryUnlock(void) {
+  CHALLENGE challenge;
+  RESPONSE response;
 
-  // Receive packet with some error checking
-  receive_board_message_by_type(&message, UNLOCK_MAGIC);
+  // Make sure the fob is requesting an unlock
+  fob_requests_unlock() &&
 
-  // Pad payload to a string
-  message.buffer[message.message_len] = 0;
+  // Generate a challenge
+  gen_challenge(&challenge) &&
 
-  // If the data transfer is the password, unlock
-  if (!strcmp((char *)(message.buffer), (char *)pass)) {
-    uint8_t eeprom_message[64];
-    // Read last 64B of EEPROM
-    EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
-               UNLOCK_EEPROM_SIZE);
+  // Send challenge to fob
+  send_challenge(&challenge) &&
 
-    // Get flag for boot reference design, and replace end of unlock message
-    // YOU ARE NOT ALLOWED TO DO THIS IN YOUR DESIGN
-    char flag[28];
-    for (int i = 0; aseiFuengleR[i]; i++) {
-        flag[i] = deobfuscate(aseiFuengleR[i], djFIehjkklIH[i]);
-        flag[i+1] = 0;
-    }
+  // Get response within 1 second
+  get_response(&response) &&
 
-    int j = UNLOCK_EEPROM_SIZE - 28;
-    for (int i = 0; i < 28; i++) {
-        eeprom_message[j] = (uint8_t)(flag[i]);
-        j++;
-    }
+  // Check whether the response to the challenge was valid
+  verify_response(&challenge, &response) &&
+  
+  // Unlock the car
+  unlockCar() &&
 
-    // Write out full flag if applicable
-    uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
-
-    sendAckSuccess();
-
-    startCar();
-  } else {
-    sendAckFailure();
-  }
+  // Start the car
+  startCar();
 }
 
 /**
