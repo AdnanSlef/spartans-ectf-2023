@@ -49,10 +49,12 @@ def package(package_name, car_id, feature_number):
 
     car_pubkey_bytes = long_to_bytes(car_pubkey._point.x, ECC_PRIVSIZE) + long_to_bytes(car_pubkey._point.y, ECC_PRIVSIZE)
 
+    feature_num_bytes = feature_number.to_bytes(4,'little')
+
     # Create package to match defined structure on fob
     package_message_bytes = (
         car_pubkey_bytes
-        + feature_number.to_bytes(1, "little")
+        + feature_num_bytes
     )
 
     h = SHA256.new(package_message_bytes)
@@ -60,7 +62,7 @@ def package(package_name, car_id, feature_number):
     # 64 bytes
     signature = signer.sign(h)
 
-    package_signed_message_bytes = feature_number.to_bytes(1, "little") + signature
+    package_signed_message_bytes = feature_num_bytes + signature
 
     # Write data out to package file
     # /package_dir/ is the mounted location inside the container - should not change
