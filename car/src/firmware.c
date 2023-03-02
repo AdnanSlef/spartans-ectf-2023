@@ -141,7 +141,7 @@ bool startCar(void) {
 
   // Verify correct car id
   if (strcmp((char *)car_id, (char *)feature_info->car_id)) {
-    return;
+    return false;
   }
 
   // Print out features for all active features
@@ -158,5 +158,7 @@ bool startCar(void) {
 
     uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
   }
+
+  return true;
 }
 
