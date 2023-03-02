@@ -29,7 +29,7 @@ def package(package_name, car_id, feature_number):
     # Load host pubkey
     host_privkey_file = "/secrets/host_privkey.PEM"
     
-    with open(host_privkey_file) as fp:
+    with open(host_privkey_file, "rb") as fp:
         host_privkey_pem = fp.read()
 
     host_privkey = ecc.import_key(host_privkey_pem)
