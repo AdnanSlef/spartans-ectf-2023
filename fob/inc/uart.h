@@ -57,15 +57,6 @@ int32_t uart_readb(uint32_t uart);
 uint32_t uart_read(uint32_t uart, uint8_t *buf, uint32_t n);
 
 /**
- * @brief Read a line (terminated with '\n') from a UART interface.
- *
- * @param uart is the base address of the UART port to read from.
- * @param buf is a pointer to the destination for the received data.
- * @return the number of bytes read from the UART interface.
- */
-uint32_t uart_readline(uint32_t uart, uint8_t *buf);
-
-/**
  * @brief Write a byte to a UART interface.
  *
  * @param uart is the base address of the UART port to write to.

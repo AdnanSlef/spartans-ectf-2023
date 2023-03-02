@@ -32,7 +32,7 @@
 #include "uart.h"
 #include "firmware.h"
 
-/*** Globals to Debounce Switch ***/
+/*** Globals to Handle Hardware Switch ***/
 uint8_t previous_sw_state = GPIO_PIN_4;
 uint8_t debounce_sw_state = GPIO_PIN_4;
 uint8_t current_sw_state = GPIO_PIN_4;
@@ -110,18 +110,23 @@ void tryHostCmd(void) {
 
     if(cmd == ENABLE_CMD) {
       // if fob is paired, enable feature
-      if(MY_PAIRED) {
+      if(PFOB) {
         enableFeature(&fob_state_ram);
       }
     }
     if(cmd == P_PAIR_CMD) {
       // if fob is paired, pair another fob
-      pairFob(&fob_state_ram); //todo timeout
+      if(PFOB) {
+        pPairFob(&fob_state_ram); //todo timeout
+      }
     }
     if(cmd == U_PAIR_CMD) {
       // if fob is unpaired, pair fob
-      pairFob(&fob_state_ram);
+      if(UFOB && OG_UFOB) {
+        uPairFob(&fob_state_ram);
+      }
     }
+
   }
 }
 
@@ -135,7 +140,10 @@ void tryButton(void) {
     debounce_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
 
     if (debounce_sw_state == current_sw_state) {
-      unlockCar(&fob_state_ram);
+      // switch pressed, unlock car if paired
+      if(PFOB) {
+        unlockCar(&fob_state_ram);
+      }
     }
 
   }
@@ -147,46 +155,76 @@ void tryButton(void) {
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void pairFob(FLASH_DATA *fob_state_ram)
+void pPairFob(FLASH_DATA *fob_state_ram)
 {
+
+  if(!PFOB) {
+    return;
+  }
+
+  // get pin from HOST_UART
+  // if pin is invalid,
+  //    sleep(5) and return
+  // if pin is valid,
+  //    send PIN to UFOB_UART
+  //    send key to UFOB_UART
+
   MESSAGE_PACKET message;
   // Start pairing transaction - fob is already paired
-  if (fob_state_ram->paired == FLASH_PAIRED)
-  {
-    int16_t bytes_read;
-    uint8_t uart_buffer[8];
-    uart_write(HOST_UART, (uint8_t *)"P", 1);
-    bytes_read = uart_readline(HOST_UART, uart_buffer);
+  int16_t bytes_read;
+  uint8_t uart_buffer[8];
+  uart_write(HOST_UART, (uint8_t *)"P", 1);
+  bytes_read = uart_readline(HOST_UART, uart_buffer);
 
-    if (bytes_read == 6)
+  if (bytes_read == 6)
+  {
+    // If the pin is correct
+    if (!(strcmp((char *)uart_buffer,
+                  (char *)fob_state_ram->pair_info.pin)))
     {
-      // If the pin is correct
-      if (!(strcmp((char *)uart_buffer,
-                   (char *)fob_state_ram->pair_info.pin)))
-      {
-        // Pair the new key by sending a PAIR_PACKET structure
-        // with required information to unlock door
-        message.message_len = sizeof(PAIR_PACKET);
-        message.magic = PAIR_MAGIC;
-        message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-        send_board_message(&message);
-      }
+      // Pair the new key by sending a PAIR_PACKET structure
+      // with required information to unlock door
+      message.message_len = sizeof(PAIR_PACKET);
+      message.magic = PAIR_MAGIC;
+      message.buffer = (uint8_t *)&fob_state_ram->pair_info;
+      send_board_message(&message);
     }
   }
+}
 
-  // Start pairing transaction - fob is not paired
-  else
-  {
-    message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-    receive_board_message_by_type(&message, PAIR_MAGIC);
-    fob_state_ram->paired = FLASH_PAIRED;
-    strcpy((char *)fob_state_ram->feature_info.car_id,
-           (char *)fob_state_ram->pair_info.car_id);
+/**
+ * @brief Function that carries out pairing of the fob
+ *
+ * @param fob_state_ram pointer to the current fob state in ram
+ */
+void uPairFob(FLASH_DATA *fob_state_ram)
+{
+  uint32_t PIN;
+  TODO_KEYTYPE key;
 
-    uart_write(HOST_UART, (uint8_t *)"Paired", 6);
-
-    saveFobState(fob_state_ram);
+  if(!(UFOB && OG_UFOB)) {
+    return;
   }
+
+  // get_PIN(&PIN, PFOB_UART)
+  // get_key(&key, PFOB_UART)
+  // set_PIN(PIN)
+  // set_key(key)
+  // PFOB true, UFOB false
+
+
+  // reference design below
+  MESSAGE_PACKET message;
+  // Start pairing transaction - fob is not paired
+  message.buffer = (uint8_t *)&fob_state_ram->pair_info;
+  receive_board_message_by_type(&message, PAIR_MAGIC);
+  fob_state_ram->paired = FLASH_PAIRED;
+  strcpy((char *)fob_state_ram->feature_info.car_id,
+          (char *)fob_state_ram->pair_info.car_id);
+
+  uart_write(HOST_UART, (uint8_t *)"Paired", 6);
+
+  saveFobState(fob_state_ram);
 }
 
 /**
@@ -196,6 +234,15 @@ void pairFob(FLASH_DATA *fob_state_ram)
  */
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
+  if(!PFOB) {
+    return;
+  }
+
+  // get package from Host UART
+  // add it to our packages, implementation depending on functional requirements.
+  // if we only need to support 1,2,3 then we don't even need dynamic-list-with-max-size, just a static array
+
+  // reference design below
   if (fob_state_ram->paired == FLASH_PAIRED)
   {
     uint8_t uart_buffer[20];
@@ -240,6 +287,16 @@ void enableFeature(FLASH_DATA *fob_state_ram)
  */
 void unlockCar(FLASH_DATA *fob_state_ram)
 {
+  if(!PFOB) {
+    return;
+  }
+
+  // request unlock (send unlock magic byte to CAR_UART)
+  // get challenge from CAR_UART
+  // generate response
+  // send response and features
+
+  // reference design below
   if (fob_state_ram->paired == FLASH_PAIRED)
   {
     MESSAGE_PACKET message;
