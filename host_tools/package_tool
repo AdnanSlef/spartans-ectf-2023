@@ -13,13 +13,39 @@
 # @copyright Copyright (c) 2023 The MITRE Corporation
 
 import argparse
-
+import Crypto.PublicKey.ECC as ecc
+import json
 
 # @brief Function to create a new feature package
 # @param package_name, name of the file to output package data to
 # @param car_id, the id of the car the feature is being packaged for
 # @param feature_number, the feature number being packaged
 def package(package_name, car_id, feature_number):
+    # Load host secrets
+    host_privkey_file = "/secrets/host_privkey.PEM"
+    host_pubkey_file = "/secrets/host_privkey.PEM"
+    
+    with open(host_privkey_file) as fp:
+        host_privkey_pem = fp.read()
+
+    with open(host_pubkey_file) as fp:
+        host_pubkey_pem = fp.read()
+
+    host_privkey = ecc.import_key(host_privkey_pem)
+    host_pubkey = ecc.import_key(host_pubkey_pem)
+
+    # Load car secrets
+    secrets_file = "/secrets/car_secrets.json"
+    if secrets_file.exists():
+        with open(secrets_file, "r") as fp:
+            secrets = json.load(fp)
+    else:
+        secrets = {}
+    
+    if car_id not in secrets:
+        raise Exception("Car data not found in secrets file")
+    
+    car_pubkey = ecc.import_key(secrets[car_id]["pubkey_pem"])
 
     # Pad id lenth to 8 bytes
     car_id_len = len(car_id)
