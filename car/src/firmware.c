@@ -29,34 +29,9 @@
 #include "secrets.h"
 
 #include "board_link.h"
-#include "feature_list.h"
 #include "uart.h"
 
-/*** Structure definitions ***/
-// Structure of start_car packet FEATURE_DATA
-typedef struct {
-  uint8_t car_id[8];
-  uint8_t num_active;
-  uint8_t features[NUM_FEATURES];
-} FEATURE_DATA;
-
-typedef struct {//TODO
-  uint8_t data[64];
-} CHALLENGE;
-
-typedef struct {//TODO
-  uint8_t data[64];
-} RESPONSE;
-
-/*** Macro Definitions ***/
-// Definitions for unlock message location in EEPROM
-#define UNLOCK_EEPROM_LOC 0x7C0
-#define UNLOCK_EEPROM_SIZE 64
-
-/*** Function definitions ***/
-// Core functions - tryUnlock and startCar
-void tryUnlock(void);
-void startCar(void);
+#include "firmware.h"
 
 // Declare password
 const uint8_t pass[] = PASSWORD;
@@ -132,7 +107,7 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   return false;
 }
 
-bool unlockCar() {
+bool unlockCar(void) {
   uint8_t eeprom_message[64];
 
   // Zero out eeprom message
@@ -153,7 +128,7 @@ bool unlockCar() {
 /**
  * @brief Function that handles starting of car - feature list
  */
-int startCar(void) {
+bool startCar(void) {
   // Create a message struct variable for receiving data
   MESSAGE_PACKET message;
   uint8_t buffer[256];
@@ -162,7 +137,7 @@ int startCar(void) {
   // Receive start message
   receive_board_message_by_type(&message, START_MAGIC);
 
-  FEATURE_DATA *feature_info = (FEATURE_DATA *)buffer;
+  PACKAGE *feature_info = (PACKAGE *)buffer;
 
   // Verify correct car id
   if (strcmp((char *)car_id, (char *)feature_info->car_id)) {

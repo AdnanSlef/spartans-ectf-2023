@@ -71,4 +71,9 @@ uint32_t receive_board_message(MESSAGE_PACKET *message);
  */
 uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type);
 
+
+bool send_challenge(CHALLENGE *challenge);
+bool fob_requests_unlock(void);
+bool get_response(RESPONSE *response);
+
 #endif

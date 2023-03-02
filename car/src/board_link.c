@@ -25,6 +25,9 @@
 #include "driverlib/uart.h"
 
 #include "board_link.h"
+#include "uart.h"
+
+#include "firmware.h"
 
 /**
  * @brief Set the up board link object
@@ -95,7 +98,7 @@ uint32_t receive_board_message(MESSAGE_PACKET *message) { //TODO delete or adapt
  *
  * @return bool true if fob is requesting unlock, false otherwise
  */
-bool fob_requests_unlock() {
+bool fob_requests_unlock(void) {
   return uart_avail(FOB_UART) && uart_readb(FOB_UART)==UNLOCK_MAGIC;
 }
 
