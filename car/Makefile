@@ -106,52 +106,6 @@ car: ${COMPILER}/firmware.axf
 car: copy_artifacts
 
 
-
-
-################ start sweet-b inclusion ################
-DO_MAKE_SWEET_B=yes
-ifdef DO_MAKE_SWEET_B
-
-# path to sweet-b library
-SBPATH=${ROOT}/lib/sweet-b
-
-# add path to sweet-b source files to source path
-VPATH+=${SBPATH}/src
-VPATH+=${SBPATH}/include
-
-# add sweet-b library to includes path
-IPATH+=${SBPATH}/include
-IPATH+=${SBPATH}/src
-
-# add compiler flag to enable test ECC (B) code
-CFLAGS+=-DDO_INCLUDE_SB
-
-# add compiler flag to allow sweet-b to work on Cortex-M3
-CFLAGS+=-DSB_WORD_SIZE=2
-
-# disable the unused curve
-CFLAGS+=-DSB_SW_SECP256K1_SUPPORT=0
-
-# add sweet-b object files to includes path
-LDFLAGS+=${COMPILER}/sb_sha256.o
-LDFLAGS+=${COMPILER}/sb_fe.o
-LDFLAGS+=${COMPILER}/sb_hmac_sha256.o
-LDFLAGS+=${COMPILER}/sb_hmac_drbg.o
-LDFLAGS+=${COMPILER}/sb_hkdf.o
-LDFLAGS+=${COMPILER}/sb_sw_lib.o
-
-# add rules to build sweet-b components
-car: ${COMPILER}/sb_sha256.o
-car: ${COMPILER}/sb_fe.o
-car: ${COMPILER}/sb_hmac_sha256.o
-car: ${COMPILER}/sb_hmac_drbg.o
-car: ${COMPILER}/sb_hkdf.o
-car: ${COMPILER}/sb_sw_lib.o
-
-endif
-################# end sweet-b inclusion #################
-
-
 # build libraries
 ${TIVA_ROOT}/driverlib/${COMPILER}/libdriver.a:
 	${MAKE} -C ${TIVA_ROOT}/driverlib
