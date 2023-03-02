@@ -28,7 +28,7 @@ echo "SECRET!" > /secrets/global_secrets.txt
 
 # Example of building a car
 cd car
-make car CAR_ID=123 BIN_PATH=/out/testcar1.bin SECRETS_DIR=/secrets ELF_PATH=/out/testcar1.elf EEPROM_PATH=/out/testcar1.eeprom
+make all CAR_ID=123 BIN_PATH=/out/testcar1.bin SECRETS_DIR=/secrets ELF_PATH=/out/testcar1.elf EEPROM_PATH=/out/testcar1.eeprom
 
 docker stop container_id
 
