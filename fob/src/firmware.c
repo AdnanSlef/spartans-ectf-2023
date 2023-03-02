@@ -96,32 +96,7 @@ int main(void)
   while (true)
   {
 
-    // Non blocking UART polling
-    if (uart_avail(HOST_UART))
-    {
-      uint8_t uart_char = (uint8_t)uart_readb(HOST_UART);
-
-      if ((uart_char != '\r') && (uart_char != '\n') && (uart_char != '\0') &&
-          (uart_char != 0xD))
-      {
-        uart_buffer[uart_buffer_index] = uart_char;
-        uart_buffer_index++;
-      }
-      else
-      {
-        uart_buffer[uart_buffer_index] = 0x00;
-        uart_buffer_index = 0;
-
-        if (!(strcmp((char *)uart_buffer, "enable")))
-        {
-          enableFeature(&fob_state_ram);
-        }
-        else if (!(strcmp((char *)uart_buffer, "pair")))
-        {
-          pairFob(&fob_state_ram);
-        }
-      }
-    }
+    tryHostCmd();
 
     current_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
     if ((current_sw_state != previous_sw_state) && (current_sw_state == 0))
@@ -140,6 +115,29 @@ int main(void)
       }
     }
     previous_sw_state = current_sw_state;
+  }
+}
+
+void tryHostCmd(void) {
+  // Non blocking UART polling
+  if (uart_avail(HOST_UART))
+  {
+    uint8_t cmd = (uint8_t)uart_readb(HOST_UART);
+
+    if(cmd == ENABLE_CMD) {
+      // if fob is paired, enable feature
+      if(MY_PAIRED) {
+        enableFeature(&fob_state_ram);
+      }
+    }
+    if(cmd == P_PAIR_CMD) {
+      // if fob is paired, pair another fob
+      pairFob(&fob_state_ram); //todo timeout
+    }
+    if(cmd == U_PAIR_CMD) {
+      // if fob is unpaired, pair fob
+      pairFob(&fob_state_ram);
+    }
   }
 }
 
