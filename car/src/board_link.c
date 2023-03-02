@@ -25,6 +25,9 @@
 #include "driverlib/uart.h"
 
 #include "board_link.h"
+#include "uart.h"
+
+#include "firmware.h"
 
 /**
  * @brief Set the up board link object
@@ -42,11 +45,11 @@ void setup_board_link(void) {
 
   // Configure the UART for 115,200, 8-N-1 operation.
   UARTConfigSetExpClk(
-      BOARD_UART, SysCtlClockGet(), 115200,
+      FOB_UART, SysCtlClockGet(), 115200,
       (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
-  while (UARTCharsAvail(BOARD_UART)) {
-    UARTCharGet(BOARD_UART);
+  while (UARTCharsAvail(FOB_UART)) {
+    UARTCharGet(FOB_UART);
   }
 }
 
@@ -56,12 +59,12 @@ void setup_board_link(void) {
  * @param message pointer to message to send
  * @return uint32_t the number of bytes sent
  */
-uint32_t send_board_message(MESSAGE_PACKET *message) {
-  UARTCharPut(BOARD_UART, message->magic);
-  UARTCharPut(BOARD_UART, message->message_len);
+uint32_t send_board_message(MESSAGE_PACKET *message) {//TODO delete, just a model for send
+  UARTCharPut(FOB_UART, message->magic);
+  UARTCharPut(FOB_UART, message->message_len);
 
   for (int i = 0; i < message->message_len; i++) {
-    UARTCharPut(BOARD_UART, message->buffer[i]);
+    UARTCharPut(FOB_UART, message->buffer[i]);
   }
 
   return message->message_len;
@@ -73,33 +76,48 @@ uint32_t send_board_message(MESSAGE_PACKET *message) {
  * @param message pointer to message where data will be received
  * @return uint32_t the number of bytes received - 0 for error
  */
-uint32_t receive_board_message(MESSAGE_PACKET *message) {
-  message->magic = (uint8_t)UARTCharGet(BOARD_UART);
+uint32_t receive_board_message(MESSAGE_PACKET *message) { //TODO delete or adapt, just a model for receive
+  message->magic = (uint8_t)UARTCharGet(FOB_UART);
 
   if (message->magic == 0) {
     return 0;
   }
 
-  message->message_len = (uint8_t)UARTCharGet(BOARD_UART);
+  message->message_len = (uint8_t)UARTCharGet(FOB_UART);
 
   for (int i = 0; i < message->message_len; i++) {
-    message->buffer[i] = (uint8_t)UARTCharGet(BOARD_UART);
+    message->buffer[i] = (uint8_t)UARTCharGet(FOB_UART);
   }
 
   return message->message_len;
 }
 
-/**
- * @brief Function that retreives messages until the specified message is found
- *
- * @param message pointer to message where data will be received
- * @param type the type of message to receive
- * @return uint32_t the number of bytes received
- */
-uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
-  do {
-    receive_board_message(message);
-  } while (message->magic != type);
 
-  return message->message_len;
+/**
+ * @brief Function that determines whether the fob is requesting an unlock
+ *
+ * @return bool true if fob is requesting unlock, false otherwise
+ */
+bool fob_requests_unlock(void) {
+  return uart_avail(FOB_UART) && uart_readb(FOB_UART)==UNLOCK_MAGIC;
+}
+
+/**
+ * @brief TODO implement
+*/
+bool send_challenge(CHALLENGE *challenge) {
+  return false;
+}
+
+/**
+ * @brief Gets a response from the fob to the challenge that was sent
+ * Times out after 1 second of 
+ *
+ * @param response [out] where to store the gathered response
+ * @return bool true if fob is requesting unlock, false otherwise
+ */
+bool get_response(RESPONSE *response) {
+  //read a defined number of bytes, but only for 1 second
+  //TODO timeout after 1 second, returning false
+  return false;
 }

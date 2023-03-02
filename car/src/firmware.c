@@ -28,44 +28,15 @@
 
 #include "secrets.h"
 
-#include "board_link.h"
-#include "feature_list.h"
-#include "uart.h"
-
-#ifdef DO_INCLUDE_SB
 #include "sb_all.h"
-#endif
 
-/*** Structure definitions ***/
-// Structure of start_car packet FEATURE_DATA
-typedef struct {
-  uint8_t car_id[8];
-  uint8_t num_active;
-  uint8_t features[NUM_FEATURES];
-} FEATURE_DATA;
-
-/*** Macro Definitions ***/
-// Definitions for unlock message location in EEPROM
-#define UNLOCK_EEPROM_LOC 0x7C0
-#define UNLOCK_EEPROM_SIZE 64
-
-/*** Function definitions ***/
-// Core functions - unlockCar and startCar
-void unlockCar(void);
-void startCar(void);
-
-// Helper functions - sending ack messages
-void sendAckSuccess(void);
-void sendAckFailure(void);
+#include "board_link.h"
+#include "uart.h"
+#include "firmware.h"
 
 // Declare password
 const uint8_t pass[] = PASSWORD;
 const uint8_t car_id[] = CAR_ID;
-
-// trust me, it's easier to get the boot reference flag by
-// getting this running than to try to untangle this
-// NOTE: you're not allowed to do this in your code
-typedef uint32_t aErjfkdfru;const aErjfkdfru aseiFuengleR[]={0x1ffe4b6,0x3098ac,0x2f56101,0x11a38bb,0x485124,0x11644a7,0x3c74e8,0x3c74e8,0x2f56101,0x2ca498,0xeac7cb,0x2e590b1,0x1fbf0a2,0x51bd0,0x51bd0,0x1fbf0a2,0x127bc,0x2b61fc1,0x2ba13d5,0xeac7cb,0x11a38bb,0x2e590b1,0x127bc,0x127bc,0xeac7cb,0x11644a7,0x2179d2e,0};const aErjfkdfru djFIehjkklIH[]={0x138e798,0x2cdbb14,0x1f9f376,0x23bcfda,0x1d90544,0x1cad2d2,0x860e2c,0x860e2c,0x1f9f376,0x25cbe0c,0x8a977a,0x35ff56,0xc7ea90,0x18d7fbc,0x18d7fbc,0xc7ea90,0x11c82b4,0x21f6af6,0x29067fe,0x8a977a,0x23bcfda,0x35ff56,0x11c82b4,0x11c82b4,0x8a977a,0x1cad2d2,0x4431c8,0};typedef int skerufjp;skerufjp siNfidpL(skerufjp verLKUDSfj){aErjfkdfru ubkerpYBd=12+1;skerufjp xUrenrkldxpxx=2253667944%0x432a1f32;aErjfkdfru UfejrlcpD=1361423303;verLKUDSfj=(verLKUDSfj+0x12345678)%60466176;while(xUrenrkldxpxx--!=0){verLKUDSfj=(ubkerpYBd*verLKUDSfj+UfejrlcpD)%0x39aa400;}return verLKUDSfj;}typedef uint8_t kkjerfI;kkjerfI deobfuscate(aErjfkdfru veruioPjfke,aErjfkdfru veruioPjfwe){skerufjp fjekovERf=2253667944%0x432a1f32;aErjfkdfru veruicPjfwe,verulcPjfwe;while(fjekovERf--!=0){veruioPjfwe=(veruioPjfwe-siNfidpL(veruioPjfke))%0x39aa400;veruioPjfke=(veruioPjfke-siNfidpL(veruioPjfwe))%60466176;}veruicPjfwe=(veruioPjfke+0x39aa400)%60466176;verulcPjfwe=(veruioPjfwe+60466176)%0x39aa400;return veruicPjfwe*60466176+verulcPjfwe-89;}
 
 /**
  * @brief Main function for the car example
@@ -78,11 +49,6 @@ int main(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-  // Change LED color: red
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1); // r
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0); // b
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0); // g
-
   // Initialize UART peripheral
   uart_init();
 
@@ -91,61 +57,79 @@ int main(void) {
 
   while (true) {
 
-    unlockCar();
+    tryUnlock();
   }
 }
 
 /**
  * @brief Function that handles unlocking of car
  */
-void unlockCar(void) {
-  // Create a message struct variable for receiving data
-  MESSAGE_PACKET message;
-  uint8_t buffer[256];
-  message.buffer = buffer;
+void tryUnlock(void) {
+  CHALLENGE challenge;
+  RESPONSE response;
 
-  // Receive packet with some error checking
-  receive_board_message_by_type(&message, UNLOCK_MAGIC);
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge));
+  memset(&response, 0, sizeof(response));
 
-  // Pad payload to a string
-  message.buffer[message.message_len] = 0;
+  // Make sure the fob is requesting an unlock
+  fob_requests_unlock() &&
 
-  // If the data transfer is the password, unlock
-  if (!strcmp((char *)(message.buffer), (char *)pass)) {
-    uint8_t eeprom_message[64];
-    // Read last 64B of EEPROM
-    EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC,
-               UNLOCK_EEPROM_SIZE);
+  // Generate a challenge
+  gen_challenge(&challenge) &&
 
-    // Get flag for boot reference design, and replace end of unlock message
-    // YOU ARE NOT ALLOWED TO DO THIS IN YOUR DESIGN
-    char flag[28];
-    for (int i = 0; aseiFuengleR[i]; i++) {
-        flag[i] = deobfuscate(aseiFuengleR[i], djFIehjkklIH[i]);
-        flag[i+1] = 0;
-    }
+  // Send challenge to fob
+  send_challenge(&challenge) &&
 
-    int j = UNLOCK_EEPROM_SIZE - 28;
-    for (int i = 0; i < 28; i++) {
-        eeprom_message[j] = (uint8_t)(flag[i]);
-        j++;
-    }
+  // Get response within 1 second
+  get_response(&response) &&
 
-    // Write out full flag if applicable
-    uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+  // Check whether the response to the challenge was valid
+  verify_response(&challenge, &response) &&
 
-    sendAckSuccess();
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge)) &&
+  memset(&response, 0, sizeof(response)) &&
+  
+  // Unlock the car
+  unlockCar() &&
 
-    startCar();
-  } else {
-    sendAckFailure();
-  }
+  // Start the car
+  startCar();
+}
+
+bool gen_challenge(CHALLENGE *challenge) {
+  return false;
+}
+
+bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
+  //verify the challenge-response response
+  //verify each of the feature signatures
+  return false;
+}
+
+bool unlockCar(void) {
+  uint8_t eeprom_message[64];
+
+  // Zero out eeprom message
+  memset(&eeprom_message, 0, sizeof(eeprom_message));
+
+  // Load Unlock Success Message
+  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, UNLOCK_EEPROM_SIZE);
+
+  // Display Unlock Success Message
+  uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+
+  // Zero out eeprom message
+  memset(&eeprom_message, 0, sizeof(eeprom_message));
+
+  return true;
 }
 
 /**
  * @brief Function that handles starting of car - feature list
  */
-void startCar(void) {
+bool startCar(void) {
   // Create a message struct variable for receiving data
   MESSAGE_PACKET message;
   uint8_t buffer[256];
@@ -154,11 +138,11 @@ void startCar(void) {
   // Receive start message
   receive_board_message_by_type(&message, START_MAGIC);
 
-  FEATURE_DATA *feature_info = (FEATURE_DATA *)buffer;
+  PACKAGE *feature_info = (PACKAGE *)buffer;
 
   // Verify correct car id
   if (strcmp((char *)car_id, (char *)feature_info->car_id)) {
-    return;
+    return false;
   }
 
   // Print out features for all active features
@@ -176,40 +160,6 @@ void startCar(void) {
     uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
   }
 
-  // Change LED color: green
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0); // r
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0); // b
-  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3); // g
+  return true;
 }
 
-/**
- * @brief Function to send successful ACK message
- */
-void sendAckSuccess(void) {
-  // Create packet for successful ack and send
-  MESSAGE_PACKET message;
-
-  uint8_t buffer[1];
-  message.buffer = buffer;
-  message.magic = ACK_MAGIC;
-  buffer[0] = ACK_SUCCESS;
-  message.message_len = 1;
-
-  send_board_message(&message);
-}
-
-/**
- * @brief Function to send unsuccessful ACK message
- */
-void sendAckFailure(void) {
-  // Create packet for unsuccessful ack and send
-  MESSAGE_PACKET message;
-
-  uint8_t buffer[1];
-  message.buffer = buffer;
-  message.magic = ACK_MAGIC;
-  buffer[0] = ACK_FAIL;
-  message.message_len = 1;
-
-  send_board_message(&message);
-}

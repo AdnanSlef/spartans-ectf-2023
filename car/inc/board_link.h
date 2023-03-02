@@ -18,6 +18,8 @@
 #include <stdint.h>
 
 #include "inc/hw_memmap.h"
+#include "firmware.h"
+#include "uart.h"
 
 #define ACK_SUCCESS 1
 #define ACK_FAIL 0
@@ -26,7 +28,7 @@
 #define PAIR_MAGIC 0x55
 #define UNLOCK_MAGIC 0x56
 #define START_MAGIC 0x57
-#define BOARD_UART ((uint32_t)UART1_BASE)
+#define FOB_UART ((uint32_t)UART1_BASE)
 
 /**
  * @brief Structure for message between boards
@@ -70,5 +72,10 @@ uint32_t receive_board_message(MESSAGE_PACKET *message);
  * @return uint32_t the number of bytes received
  */
 uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type);
+
+
+bool send_challenge(CHALLENGE *challenge);
+bool fob_requests_unlock(void);
+bool get_response(RESPONSE *response);
 
 #endif
