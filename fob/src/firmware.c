@@ -24,11 +24,13 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
 
+// #include "sb_all.h"
+
 #include "secrets.h"
 
 #include "board_link.h"
-#include "feature_list.h"
 #include "uart.h"
+#include "firmware.h"
 
 /**
  * @brief Main function for the fob example
