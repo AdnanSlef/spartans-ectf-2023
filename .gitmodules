@@ -4,3 +4,9 @@
 [submodule "car/lib/tiny-AES-c"]
 	path = car/lib/tiny-AES-c
 	url = git@github.com:kokke/tiny-AES-c.git
+[submodule "car/lib/sweet-b"]
+	path = car/lib/sweet-b
+	url = https://github.com/westerndigitalcorporation/sweet-b
+[submodule "fob/lib/sweet-b"]
+	path = fob/lib/sweet-b
+	url = https://github.com/westerndigitalcorporation/sweet-b
