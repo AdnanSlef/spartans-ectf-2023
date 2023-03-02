@@ -32,7 +32,7 @@
 #include "uart.h"
 #include "firmware.h"
 
-/*** Globals to Debounce Switch ***/
+/*** Globals to Handle Hardware Switch ***/
 uint8_t previous_sw_state = GPIO_PIN_4;
 uint8_t debounce_sw_state = GPIO_PIN_4;
 uint8_t current_sw_state = GPIO_PIN_4;
@@ -126,6 +126,7 @@ void tryHostCmd(void) {
         uPairFob(&fob_state_ram);
       }
     }
+
   }
 }
 
@@ -139,7 +140,10 @@ void tryButton(void) {
     debounce_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
 
     if (debounce_sw_state == current_sw_state) {
-      unlockCar(&fob_state_ram);
+      // switch pressed, unlock car if paired
+      if(PFOB) {
+        unlockCar(&fob_state_ram);
+      }
     }
 
   }
@@ -153,6 +157,18 @@ void tryButton(void) {
  */
 void pPairFob(FLASH_DATA *fob_state_ram)
 {
+
+  if(!PFOB) {
+    return;
+  }
+
+  // get pin from HOST_UART
+  // if pin is invalid,
+  //    sleep(5) and return
+  // if pin is valid,
+  //    send PIN to UFOB_UART
+  //    send key to UFOB_UART
+
   MESSAGE_PACKET message;
   // Start pairing transaction - fob is already paired
   int16_t bytes_read;
@@ -183,6 +199,21 @@ void pPairFob(FLASH_DATA *fob_state_ram)
  */
 void uPairFob(FLASH_DATA *fob_state_ram)
 {
+  uint32_t PIN;
+  TODO_KEYTYPE key;
+
+  if(!(UFOB && OG_UFOB)) {
+    return;
+  }
+
+  // get_PIN(&PIN, PFOB_UART)
+  // get_key(&key, PFOB_UART)
+  // set_PIN(PIN)
+  // set_key(key)
+  // PFOB true, UFOB false
+
+
+  // reference design below
   MESSAGE_PACKET message;
   // Start pairing transaction - fob is not paired
   message.buffer = (uint8_t *)&fob_state_ram->pair_info;
@@ -203,6 +234,15 @@ void uPairFob(FLASH_DATA *fob_state_ram)
  */
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
+  if(!PFOB) {
+    return;
+  }
+
+  // get package from Host UART
+  // add it to our packages, implementation depending on functional requirements.
+  // if we only need to support 1,2,3 then we don't even need dynamic-list-with-max-size, just a static array
+
+  // reference design below
   if (fob_state_ram->paired == FLASH_PAIRED)
   {
     uint8_t uart_buffer[20];
@@ -247,6 +287,16 @@ void enableFeature(FLASH_DATA *fob_state_ram)
  */
 void unlockCar(FLASH_DATA *fob_state_ram)
 {
+  if(!PFOB) {
+    return;
+  }
+
+  // request unlock (send unlock magic byte to CAR_UART)
+  // get challenge from CAR_UART
+  // generate response
+  // send response and features
+
+  // reference design below
   if (fob_state_ram->paired == FLASH_PAIRED)
   {
     MESSAGE_PACKET message;
