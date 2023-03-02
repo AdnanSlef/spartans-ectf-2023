@@ -116,11 +116,11 @@ void tryHostCmd(void) {
     }
     if(cmd == P_PAIR_CMD) {
       // if fob is paired, pair another fob
-      pairFob(&fob_state_ram); //todo timeout
+      pPairFob(&fob_state_ram); //todo timeout
     }
     if(cmd == U_PAIR_CMD) {
       // if fob is unpaired, pair fob
-      pairFob(&fob_state_ram);
+      uPairFob(&fob_state_ram);
     }
   }
 }
@@ -147,46 +147,49 @@ void tryButton(void) {
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void pairFob(FLASH_DATA *fob_state_ram)
+void pPairFob(FLASH_DATA *fob_state_ram)
 {
   MESSAGE_PACKET message;
   // Start pairing transaction - fob is already paired
-  if (fob_state_ram->paired == FLASH_PAIRED)
-  {
-    int16_t bytes_read;
-    uint8_t uart_buffer[8];
-    uart_write(HOST_UART, (uint8_t *)"P", 1);
-    bytes_read = uart_readline(HOST_UART, uart_buffer);
+  int16_t bytes_read;
+  uint8_t uart_buffer[8];
+  uart_write(HOST_UART, (uint8_t *)"P", 1);
+  bytes_read = uart_readline(HOST_UART, uart_buffer);
 
-    if (bytes_read == 6)
+  if (bytes_read == 6)
+  {
+    // If the pin is correct
+    if (!(strcmp((char *)uart_buffer,
+                  (char *)fob_state_ram->pair_info.pin)))
     {
-      // If the pin is correct
-      if (!(strcmp((char *)uart_buffer,
-                   (char *)fob_state_ram->pair_info.pin)))
-      {
-        // Pair the new key by sending a PAIR_PACKET structure
-        // with required information to unlock door
-        message.message_len = sizeof(PAIR_PACKET);
-        message.magic = PAIR_MAGIC;
-        message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-        send_board_message(&message);
-      }
+      // Pair the new key by sending a PAIR_PACKET structure
+      // with required information to unlock door
+      message.message_len = sizeof(PAIR_PACKET);
+      message.magic = PAIR_MAGIC;
+      message.buffer = (uint8_t *)&fob_state_ram->pair_info;
+      send_board_message(&message);
     }
   }
+}
 
+/**
+ * @brief Function that carries out pairing of the fob
+ *
+ * @param fob_state_ram pointer to the current fob state in ram
+ */
+void uPairFob(FLASH_DATA *fob_state_ram)
+{
+  MESSAGE_PACKET message;
   // Start pairing transaction - fob is not paired
-  else
-  {
-    message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-    receive_board_message_by_type(&message, PAIR_MAGIC);
-    fob_state_ram->paired = FLASH_PAIRED;
-    strcpy((char *)fob_state_ram->feature_info.car_id,
-           (char *)fob_state_ram->pair_info.car_id);
+  message.buffer = (uint8_t *)&fob_state_ram->pair_info;
+  receive_board_message_by_type(&message, PAIR_MAGIC);
+  fob_state_ram->paired = FLASH_PAIRED;
+  strcpy((char *)fob_state_ram->feature_info.car_id,
+          (char *)fob_state_ram->pair_info.car_id);
 
-    uart_write(HOST_UART, (uint8_t *)"Paired", 6);
+  uart_write(HOST_UART, (uint8_t *)"Paired", 6);
 
-    saveFobState(fob_state_ram);
-  }
+  saveFobState(fob_state_ram);
 }
 
 /**
