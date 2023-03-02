@@ -32,6 +32,10 @@
 #include "feature_list.h"
 #include "uart.h"
 
+#ifdef DO_INCLUDE_SB
+#include "sb_all.h"
+#endif
+
 /*** Structure definitions ***/
 // Structure of start_car packet FEATURE_DATA
 typedef struct {
