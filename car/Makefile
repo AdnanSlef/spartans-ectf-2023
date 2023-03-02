@@ -61,11 +61,6 @@ car: ${COMPILER}
 car: car_arg_check
 car: gen_secret
 
-# these must be the last build rules of `car`
-car: ${COMPILER}/firmware.axf
-car: copy_artifacts
-
-
 ################ start sweet-b inclusion ################
 DO_MAKE_SWEET_B=yes
 ifdef DO_MAKE_SWEET_B
@@ -105,6 +100,13 @@ car: ${COMPILER}/sb_sw_lib.o
 
 endif
 ################# end sweet-b inclusion #################
+
+# these must be the last build rules of `car`
+car: ${COMPILER}/firmware.axf
+car: copy_artifacts
+
+
+
 
 
 # build libraries
