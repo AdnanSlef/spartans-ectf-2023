@@ -20,9 +20,10 @@ docker cp . container-id:/spartans-ectf-2023
 docker exec -it container-id /bin/bash
 cd /spartans-ectf-2023/ # in container
 
-# Create secrets directory (simulating build.depl which would create a volume for this directory)
+# Create secrets (simulating build.depl which would create a volume for this directory)
 mkdir /secrets
 echo "SECRET!" > /secrets/global_secrets.txt
+python3 deployment/gen_host_secrets.py --secrets-dir=/secrets
 
 # To edit files inside container, Run VSCode with Dev Containers extension and use "Attach to a running container"
 
