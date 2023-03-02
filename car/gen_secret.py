@@ -15,7 +15,7 @@
 import json
 import argparse
 from pathlib import Path
-
+import Crypto.PublicKey.ECC as ecc
 
 def main():
     parser = argparse.ArgumentParser()
@@ -31,8 +31,13 @@ def main():
     else:
         secrets = {}
 
-    # Add dummy secret
-    car_secret = args.car_id + 1
+    # Generate secret
+    privkey = ecc.generate(curve='secp256r1')
+
+    privkey_pem = privkey.export_key(format="PEM")
+    pubkey_pem = privkey.public_key().export_key(format="PEM")
+
+    car_secret = { "privkey_pem": privkey_pem, "pubkey_pem": pubkey_pem }
     secrets[str(args.car_id)] = car_secret
 
     # Save the secret file
@@ -43,7 +48,7 @@ def main():
     with open(args.header_file, "w") as fp:
         fp.write("#ifndef __CAR_SECRETS__\n")
         fp.write("#define __CAR_SECRETS__\n\n")
-        fp.write(f"#define CAR_SECRET {car_secret}\n\n")
+        fp.write(f"#define CAR_SECRET {123}\n\n") # placeholder
         fp.write(f'#define CAR_ID "{args.car_id}"\n\n')
         fp.write('#define PASSWORD "unlock"\n\n')
         fp.write("#endif\n")
