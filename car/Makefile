@@ -125,12 +125,12 @@ LDFLAGS+=${COMPILER}/sb_hkdf.o
 LDFLAGS+=${COMPILER}/sb_sw_lib.o
 
 # add rules to build sweet-b components
-all: ${COMPILER}/sb_sha256.o
-all: ${COMPILER}/sb_fe.o
-all: ${COMPILER}/sb_hmac_sha256.o
-all: ${COMPILER}/sb_hmac_drbg.o
-all: ${COMPILER}/sb_hkdf.o
-all: ${COMPILER}/sb_sw_lib.o
+car: ${COMPILER}/sb_sha256.o
+car: ${COMPILER}/sb_fe.o
+car: ${COMPILER}/sb_hmac_sha256.o
+car: ${COMPILER}/sb_hmac_drbg.o
+car: ${COMPILER}/sb_hkdf.o
+car: ${COMPILER}/sb_sw_lib.o
 
 endif
 ################# end sweet-b inclusion #################
