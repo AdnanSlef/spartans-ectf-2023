@@ -18,11 +18,15 @@
 #include <stdint.h>
 
 #include "inc/hw_memmap.h"
+#include "firmware.h"
 
 #define PAIR_MAGIC 0x55
 #define UNLOCK_MAGIC 0x56
 #define START_MAGIC 0x57
 #define BOARD_UART ((uint32_t)UART1_BASE)
+#define CAR_UART BOARD_UART
+#define PFOB_UART BOARD_UART
+#define UFOB_UART BOARD_UART
 
 /**
  * @brief Structure for message between boards

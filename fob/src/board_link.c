@@ -103,3 +103,16 @@ uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
 
   return message->message_len;
 }
+
+void request_unlock(void) {
+  uart_writeb(CAR_UART, UNLOCK_REQ);
+}
+
+void get_challenge(CHALLENGE *challenge) {\
+  // TODO read sizeof(CHALLENGE) bytes into challenge from CAR_UART
+  ((uint8_t *)challenge)[i]
+}
+
+void finalize_unlock(RESPONSE *response) {
+  uart_write(CAR_UART, response, sizeof(RESPONSE));
+}

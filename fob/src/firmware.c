@@ -234,49 +234,20 @@ void uPairFob(FLASH_DATA *fob_state_ram)
  */
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
+  SIGNATURE_TYPE sig;
+  
   if(!PFOB) {
     return;
   }
 
-  // get package from Host UART
-  // add it to our packages, implementation depending on functional requirements.
-  // if we only need to support 1,2,3 then we don't even need dynamic-list-with-max-size, just a static array
+  // Get the feature number from the host
+  uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
 
-  // reference design below
-  if (fob_state_ram->paired == FLASH_PAIRED)
-  {
-    uint8_t uart_buffer[20];
-    uart_readline(HOST_UART, uart_buffer);
+  // Get the signature for the feature from the host
+  // TODO read sizeof(sig) (64) bytes from host into sig
 
-    ENABLE_PACKET *enable_message = (ENABLE_PACKET *)uart_buffer;
-    if (strcmp((char *)fob_state_ram->pair_info.car_id,
-               (char *)enable_message->car_id))
-    {
-      return;
-    }
-
-    // Feature list full
-    if (fob_state_ram->feature_info.num_active == NUM_FEATURES)
-    {
-      return;
-    }
-
-    // Search for feature in list
-    for (int i = 0; i < fob_state_ram->feature_info.num_active; i++)
-    {
-      if (fob_state_ram->feature_info.features[i] == enable_message->feature)
-      {
-        return;
-      }
-    }
-
-    fob_state_ram->feature_info
-        .features[fob_state_ram->feature_info.num_active] =
-        enable_message->feature;
-    fob_state_ram->feature_info.num_active++;
-
-    saveFobState(fob_state_ram);
-    uart_write(HOST_UART, (uint8_t *)"Enabled", 7);
+  if(feature_num < NUM_FEATURES) {
+    memcpy(self_flash.sigs[feature_num], sig, sizeof(sig)); //except not really memcpy, it's FlashProgram based on saveFobState
   }
 }
 
@@ -287,41 +258,35 @@ void enableFeature(FLASH_DATA *fob_state_ram)
  */
 void unlockCar(FLASH_DATA *fob_state_ram)
 {
+  CHALLENGE challenge;
+  RESPONSE response;
+
   if(!PFOB) {
     return;
   }
 
-  // request unlock (send unlock magic byte to CAR_UART)
-  // get challenge from CAR_UART
-  // generate response
-  // send response and features
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge));
+  memset(&response, 0, sizeof(response));
 
-  // reference design below
-  if (fob_state_ram->paired == FLASH_PAIRED)
-  {
-    MESSAGE_PACKET message;
-    message.message_len = 6;
-    message.magic = UNLOCK_MAGIC;
-    message.buffer = fob_state_ram->pair_info.password;
-    send_board_message(&message);
-  }
-}
+  // Request the Car to Unlock
+  request_unlock();
 
-/**
- * @brief Function that handles the fob starting a car
- *
- * @param fob_state_ram pointer to the current fob state in ram
- */
-void startCar(FLASH_DATA *fob_state_ram)
-{
-  if (fob_state_ram->paired == FLASH_PAIRED)
-  {
-    MESSAGE_PACKET message;
-    message.magic = START_MAGIC;
-    message.message_len = sizeof(FEATURE_DATA);
-    message.buffer = (uint8_t *)&fob_state_ram->feature_info;
-    send_board_message(&message);
-  }
+  // Receive Unlock Challenge from Car
+  get_challenge(&challenge);
+  
+  // Generate Response
+  //TODO sign challenge and put it in &response.unlock
+  
+  // Prepare Feature Requests
+  memcpy(&response.feature1, self.flash_data.packages, sizeof(response.feature1)*3);
+
+  // Send Response with Features
+  finalize_unlock(&response);
+
+  // Zero out challenge and response
+  memset(&challenge, 0, sizeof(challenge));
+  memset(&response, 0, sizeof(response));
 }
 
 /**
