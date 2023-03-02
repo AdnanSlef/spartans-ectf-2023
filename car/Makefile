@@ -50,7 +50,7 @@ car_arg_check:
 	$(call check_defined, CAR_ID SECRETS_DIR BIN_PATH ELF_PATH EEPROM_PATH)
 
 gen_secret:
-	python3 gen_secret.py --car-id ${CAR_ID} --secret-file ${SECRETS_DIR}/car_secrets.json --header-file inc/secrets.h
+	python3 gen_secret.py --car-id ${CAR_ID} --secrets-dir ${SECRETS_DIR} --header-file inc/secrets.h
 
 ################ END car customization ################
 #######################################################
@@ -182,7 +182,7 @@ ${COMPILER}/firmware.axf: ${TIVA_ROOT}/driverlib/${COMPILER}/libdriver.a
 copy_artifacts:
 	cp ${COMPILER}/firmware.bin ${BIN_PATH}
 	cp ${COMPILER}/firmware.axf ${ELF_PATH}
-	cp ${SECRETS_DIR}/global_secrets.txt ${EEPROM_PATH}
+	cp ${SECRETS_DIR}/car_${CAR_ID}_eeprom ${EEPROM_PATH}
 
 SCATTERgcc_firmware=${TIVA_ROOT}/firmware.ld
 ENTRY_firmware=Firmware_Startup
