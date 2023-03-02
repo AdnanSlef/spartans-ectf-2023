@@ -1,7 +1,7 @@
 /**
  * @file firmware.h
  * @author Spartan State Security Team
- * @brief File that contains header information for use of the firmware of the car device
+ * @brief File that contains header information for the firmware of the car device
  * @date 2023
  */
 
