@@ -28,7 +28,7 @@ def main():
     parser.add_argument("--header-file", type=Path, required=True)
     args = parser.parse_args()
 
-    secret_file = args.secret_dir / "car_secrets.json"
+    secret_file = args.secrets_dir / "car_secrets.json"
 
     # Open the secret file if it exists
     if secret_file.exists():
@@ -66,17 +66,17 @@ def main():
     eeprom_data = host_pubkey_bytes + car_pubkey_bytes
     eeprom_path = args.secrets_dir / f"car_{args.car_id}_eeprom"
 
-    with open(eeprom_path, "w") as fp:
+    with open(eeprom_path, "wb") as fp:
         fp.write(eeprom_data)
 
     # Write to header file
-    # with open(args.header_file, "w") as fp:
-    #     fp.write("#ifndef __CAR_SECRETS__\n")
-    #     fp.write("#define __CAR_SECRETS__\n\n")
-    #     fp.write(f"#define CAR_SECRET {123}\n\n") # placeholder
-    #     fp.write(f'#define CAR_ID "{args.car_id}"\n\n')
-    #     fp.write('#define PASSWORD "unlock"\n\n')
-    #     fp.write("#endif\n")
+    with open(args.header_file, "w") as fp:
+        fp.write("#ifndef __CAR_SECRETS__\n")
+        fp.write("#define __CAR_SECRETS__\n\n")
+        # fp.write(f"#define CAR_SECRET {123}\n\n") # placeholder
+        fp.write(f'#define CAR_ID "{args.car_id}"\n\n')
+        fp.write('#define PASSWORD "unlock"\n\n')
+        fp.write("#endif\n")
 
 
 if __name__ == "__main__":
