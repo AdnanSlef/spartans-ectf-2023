@@ -8,7 +8,7 @@
 #ifndef CAR_FIRMWARE_H
 #define CAR_FIRMWARE_H
 
-/*** Features Information***/
+/*** Features Information ***/
 #define NUM_FEATURES 3
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
