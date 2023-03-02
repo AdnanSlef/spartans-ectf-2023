@@ -27,7 +27,10 @@ typedef struct {//TODO
 } CHALLENGE;
 
 typedef struct {//TODO
-  uint8_t data[64];
+  uint8_t unlock[64];
+  uint8_t feature1[64];
+  uint8_t feature2[64];
+  uint8_t feature3[64];
 } RESPONSE;
 
 /*** Macro Definitions ***/

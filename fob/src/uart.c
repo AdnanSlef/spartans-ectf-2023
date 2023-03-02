@@ -94,7 +94,6 @@ uint32_t uart_read(uint32_t uart, uint8_t *buf, uint32_t n) {
   return read;
 }
 
-
 /**
  * @brief Write a byte to a UART interface.
  *
