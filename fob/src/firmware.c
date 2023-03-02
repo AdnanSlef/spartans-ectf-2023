@@ -32,6 +32,11 @@
 #include "uart.h"
 #include "firmware.h"
 
+/*** Globals to Debounce Switch ***/
+uint8_t previous_sw_state = GPIO_PIN_4;
+uint8_t debounce_sw_state = GPIO_PIN_4;
+uint8_t current_sw_state = GPIO_PIN_4;
+
 /**
  * @brief Main function for the fob example
  *
@@ -73,7 +78,7 @@ int main(void)
     saveFobState(&fob_state_ram);
   }
 
-  // Initialize UART
+  // Initialize HOST UART
   uart_init();
 
   // Initialize board link UART
@@ -84,63 +89,57 @@ int main(void)
   GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_4MA,
                    GPIO_PIN_TYPE_STD_WPU);
 
-  // Declare a buffer for reading and writing to UART
-  uint8_t uart_buffer[10];
-  uint8_t uart_buffer_index = 0;
-
-  uint8_t previous_sw_state = GPIO_PIN_4;
-  uint8_t debounce_sw_state = GPIO_PIN_4;
-  uint8_t current_sw_state = GPIO_PIN_4;
-
-  // Infinite loop for polling UART
+  // Infinite loop to register and handle commands
   while (true)
   {
 
-    // Non blocking UART polling
-    if (uart_avail(HOST_UART))
-    {
-      uint8_t uart_char = (uint8_t)uart_readb(HOST_UART);
+    // Check for command from HOST
+    tryHostCmd();
 
-      if ((uart_char != '\r') && (uart_char != '\n') && (uart_char != '\0') &&
-          (uart_char != 0xD))
-      {
-        uart_buffer[uart_buffer_index] = uart_char;
-        uart_buffer_index++;
-      }
-      else
-      {
-        uart_buffer[uart_buffer_index] = 0x00;
-        uart_buffer_index = 0;
+    // Check for button press
+    tryButton();
 
-        if (!(strcmp((char *)uart_buffer, "enable")))
-        {
-          enableFeature(&fob_state_ram);
-        }
-        else if (!(strcmp((char *)uart_buffer, "pair")))
-        {
-          pairFob(&fob_state_ram);
-        }
-      }
-    }
-
-    current_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
-    if ((current_sw_state != previous_sw_state) && (current_sw_state == 0))
-    {
-      // Debounce switch
-      for (int i = 0; i < 10000; i++)
-        ;
-      debounce_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
-      if (debounce_sw_state == current_sw_state)
-      {
-        unlockCar(&fob_state_ram);
-        if (receiveAck())
-        {
-          startCar(&fob_state_ram);
-        }
-      }
-    }
-    previous_sw_state = current_sw_state;
   }
+}
+
+void tryHostCmd(void) {
+  // Non blocking UART polling
+  if (uart_avail(HOST_UART))
+  {
+    uint8_t cmd = (uint8_t)uart_readb(HOST_UART);
+
+    if(cmd == ENABLE_CMD) {
+      // if fob is paired, enable feature
+      if(MY_PAIRED) {
+        enableFeature(&fob_state_ram);
+      }
+    }
+    if(cmd == P_PAIR_CMD) {
+      // if fob is paired, pair another fob
+      pairFob(&fob_state_ram); //todo timeout
+    }
+    if(cmd == U_PAIR_CMD) {
+      // if fob is unpaired, pair fob
+      pairFob(&fob_state_ram);
+    }
+  }
+}
+
+void tryButton(void) {
+
+  current_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+  if ((current_sw_state != previous_sw_state) && (current_sw_state == 0)) {
+    // Debounce switch
+    SysCtlDelay(20000);
+    debounce_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+    if (debounce_sw_state == current_sw_state) {
+      unlockCar(&fob_state_ram);
+    }
+
+  }
+  previous_sw_state = current_sw_state;
 }
 
 /**
@@ -277,20 +276,4 @@ void saveFobState(FLASH_DATA *flash_data)
 {
   FlashErase(FOB_STATE_PTR);
   FlashProgram((uint32_t *)flash_data, FOB_STATE_PTR, FLASH_DATA_SIZE);
-}
-
-/**
- * @brief Function that receives an ack and returns whether ack was
- * success/failure
- *
- * @return uint8_t Ack success/failure
- */
-uint8_t receiveAck()
-{
-  MESSAGE_PACKET message;
-  uint8_t buffer[255];
-  message.buffer = buffer;
-  receive_board_message_by_type(&message, ACK_MAGIC);
-
-  return message.buffer[0];
 }

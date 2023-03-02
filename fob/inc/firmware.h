@@ -13,6 +13,12 @@
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
 
+/*** Special Constants for Communication ***/
+#define ENABLE_CMD 0x10
+#define P_PAIR_CMD 0x20
+#define U_PAIR_CMD 0x30
+#define UNLOCK_REQ  0x56
+
 /*** FLASH Storage Information ***/
 #define FOB_STATE_PTR 0x3FC00
 #define FLASH_DATA_SIZE         \
@@ -56,13 +62,14 @@ typedef struct
 
 /*** Function definitions ***/
 // Core functions
-void saveFobState(FLASH_DATA *flash_data);
-void pairFob(FLASH_DATA *fob_state_ram);
 void unlockCar(FLASH_DATA *fob_state_ram);
 void enableFeature(FLASH_DATA *fob_state_ram);
 void startCar(FLASH_DATA *fob_state_ram);
 
-// Helper functions - receive ack message
-uint8_t receiveAck();
+// Helper functions
+void tryHostCmd(void);
+void tryButton(void) 
+void saveFobState(FLASH_DATA *flash_data);
+void pairFob(FLASH_DATA *fob_state_ram);
 
 #endif
