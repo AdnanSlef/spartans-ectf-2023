@@ -28,9 +28,10 @@
 
 #include "secrets.h"
 
+#include "sb_all.h"
+
 #include "board_link.h"
 #include "uart.h"
-
 #include "firmware.h"
 
 // Declare password
