@@ -66,31 +66,45 @@ car: ${COMPILER}/firmware.axf
 car: copy_artifacts
 
 
-################ start crypto example ################
-# example AES rules to build in tiny-AES-c: https://github.com/kokke/tiny-AES-c
-# make sure submodule has been pulled (run `git submodule update --init`)
-# uncomment next line to activate
-# EXAMPLE_AES=foo
-ifdef EXAMPLE_AES
-# path to crypto library
-CRYPTOPATH=${ROOT}/lib/tiny-AES-c
+################ start sweet-b inclusion ################
+DO_MAKE_SWEET_B=yes
+ifdef DO_MAKE_SWEET_B
 
-# add path to crypto source files to source path
-VPATH+=${CRYPTOPATH}
+# path to sweet-b library
+SBPATH=${ROOT}/lib/sweet-b
 
-# add crypto library to includes path
-IPATH+=${CRYPTOPATH}
+# add path to sweet-b source files to source path
+VPATH+=${SBPATH}/src
+VPATH+=${SBPATH}/include
 
-# add crypto object file to includes path
-# LDFLAGS+=${COMPILER}/aes.o
+# add sweet-b library to includes path
+IPATH+=${SBPATH}/include
+IPATH+=${SBPATH}/src
 
-# add compiler flag to enable example AES code 
-CFLAGS+=-DEXAMPLE_AES
+# add compiler flag to allow sweet-b to work on Cortex-M3
+CFLAGS+=-DSB_WORD_SIZE=2
 
-# add rule to build crypto library
-${COMPILER}/firmware.axf: ${COMPILER}/aes.o
+# disable the unused curve
+CFLAGS+=-DSB_SW_SECP256K1_SUPPORT=0
+
+# add sweet-b object files to includes path
+LDFLAGS+=${COMPILER}/sb_sha256.o
+LDFLAGS+=${COMPILER}/sb_fe.o
+LDFLAGS+=${COMPILER}/sb_hmac_sha256.o
+LDFLAGS+=${COMPILER}/sb_hmac_drbg.o
+LDFLAGS+=${COMPILER}/sb_hkdf.o
+LDFLAGS+=${COMPILER}/sb_sw_lib.o
+
+# add rules to build sweet-b components
+car: ${COMPILER}/sb_sha256.o
+car: ${COMPILER}/sb_fe.o
+car: ${COMPILER}/sb_hmac_sha256.o
+car: ${COMPILER}/sb_hmac_drbg.o
+car: ${COMPILER}/sb_hkdf.o
+car: ${COMPILER}/sb_sw_lib.o
+
 endif
-################ end crypto example ################
+################# end sweet-b inclusion #################
 
 
 # build libraries
