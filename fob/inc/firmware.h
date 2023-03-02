@@ -62,14 +62,14 @@ typedef struct
 
 /*** Function definitions ***/
 // Core functions
-void saveFobState(FLASH_DATA *flash_data);
-void pairFob(FLASH_DATA *fob_state_ram);
 void unlockCar(FLASH_DATA *fob_state_ram);
 void enableFeature(FLASH_DATA *fob_state_ram);
 void startCar(FLASH_DATA *fob_state_ram);
 
 // Helper functions
-uint8_t receiveAck();
 void tryHostCmd(void);
+void tryButton(void) 
+void saveFobState(FLASH_DATA *flash_data);
+void pairFob(FLASH_DATA *fob_state_ram);
 
 #endif
