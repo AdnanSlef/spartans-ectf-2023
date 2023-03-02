@@ -110,17 +110,21 @@ void tryHostCmd(void) {
 
     if(cmd == ENABLE_CMD) {
       // if fob is paired, enable feature
-      if(MY_PAIRED) {
+      if(PFOB) {
         enableFeature(&fob_state_ram);
       }
     }
     if(cmd == P_PAIR_CMD) {
       // if fob is paired, pair another fob
-      pPairFob(&fob_state_ram); //todo timeout
+      if(PFOB) {
+        pPairFob(&fob_state_ram); //todo timeout
+      }
     }
     if(cmd == U_PAIR_CMD) {
       // if fob is unpaired, pair fob
-      uPairFob(&fob_state_ram);
+      if(UFOB && OG_UFOB) {
+        uPairFob(&fob_state_ram);
+      }
     }
   }
 }
