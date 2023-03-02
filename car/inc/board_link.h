@@ -18,6 +18,8 @@
 #include <stdint.h>
 
 #include "inc/hw_memmap.h"
+#include "firmware.h"
+#include "uart.h"
 
 #define ACK_SUCCESS 1
 #define ACK_FAIL 0
