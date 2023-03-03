@@ -29,6 +29,19 @@
 #define FLASH_UNPAIRED 0xFF
 
 /*** Structure definitions ***/
+typedef sb_sw_signature_t PACKAGE;
+
+typedef struct {//TODO
+  uint8_t data[64];
+} CHALLENGE;
+
+typedef struct {
+  sb_sw_signature_t unlock;
+  sb_sw_signature_t feature1;
+  sb_sw_signature_t feature2;
+  sb_sw_signature_t feature3;
+} RESPONSE;
+
 // Defines a struct for the format of an enable message
 typedef struct
 {
@@ -44,7 +57,6 @@ typedef struct
   uint8_t pin[8];
 } PAIR_PACKET;
 
-// Defines a struct for the format of start message
 typedef struct
 {
   uint8_t car_id[8];
@@ -67,6 +79,7 @@ void enableFeature(FLASH_DATA *fob_state_ram);
 void pPairFob(FLASH_DATA *fob_state_ram);
 void uPairFob(FLASH_DATA *fob_state_ram);
 void startCar(FLASH_DATA *fob_state_ram);
+void gen_response(CHALLENGE *challenge, RESPONSE *response);
 
 // Helper functions
 void tryHostCmd(void);

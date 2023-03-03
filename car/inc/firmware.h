@@ -14,23 +14,17 @@
 #define FEATURE_SIZE 64
 
 /*** Structure definitions ***/
-// Structure of start_car packet FEATURE_DATA
-typedef struct {
-  uint8_t data[64];
-  uint8_t car_id[8];
-  uint8_t num_active;
-  uint8_t features[NUM_FEATURES];
-} PACKAGE;
+typedef sb_sw_signature_t PACKAGE;
 
 typedef struct {//TODO
   uint8_t data[64];
 } CHALLENGE;
 
-typedef struct {//TODO
-  uint8_t unlock[64];
-  uint8_t feature1[64];
-  uint8_t feature2[64];
-  uint8_t feature3[64];
+typedef struct {
+  sb_sw_signature_t unlock;
+  sb_sw_signature_t feature1;
+  sb_sw_signature_t feature2;
+  sb_sw_signature_t feature3;
 } RESPONSE;
 
 /*** Macro Definitions ***/
