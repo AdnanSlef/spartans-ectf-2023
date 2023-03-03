@@ -32,10 +32,13 @@
 #include "uart.h"
 #include "firmware.h"
 
-/*** Globals to Handle Hardware Switch ***/
+/*** Globals ***/
+// Handle Hardware Switch
 uint8_t previous_sw_state = GPIO_PIN_4;
 uint8_t debounce_sw_state = GPIO_PIN_4;
 uint8_t current_sw_state = GPIO_PIN_4;
+// CSPRNG State
+sb_hmac_drbg_state_t drbg;
 
 /**
  * @brief Main function for the fob example
@@ -77,6 +80,15 @@ int main(void)
     fob_state_ram.feature_info.num_active = 0;
     saveFobState(&fob_state_ram);
   }
+
+  // instantiate drbg
+  if (sb_hmac_drbg_init(&drbg, ENTROPY[seed_idx], 32, NONCE, 16, depl_id_str, 8) != SB_SUCCESS) {
+    //failed to initialize random generator
+    sss_internal(SCEWL_ERR, SCEWL_SSS_REG);
+    memset(rsp, 0, len);
+    return SCEWL_ERR;
+  }
+  seed_idx++; seed_idx %= NUM_SEEDS;
 
   // Initialize HOST UART
   uart_init();
@@ -169,6 +181,7 @@ void pPairFob(FLASH_DATA *fob_state_ram)
   //    send PIN to UFOB_UART
   //    send key to UFOB_UART
 
+  // reference design below
   MESSAGE_PACKET message;
   // Start pairing transaction - fob is already paired
   int16_t bytes_read;
@@ -234,7 +247,7 @@ void uPairFob(FLASH_DATA *fob_state_ram)
  */
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
-  SIGNATURE_TYPE sig;
+  PACKAGE package;
   
   if(!PFOB) {
     return;
@@ -243,11 +256,27 @@ void enableFeature(FLASH_DATA *fob_state_ram)
   // Get the feature number from the host
   uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
 
-  // Get the signature for the feature from the host
-  // TODO read sizeof(sig) (64) bytes from host into sig
+  // Get the package for the feature from the host
+  uart_read(CAR_UART, &package, sizeof(PACKAGE));
 
+  // Store the feature package
   if(feature_num < NUM_FEATURES) {
-    memcpy(self_flash.sigs[feature_num], sig, sizeof(sig)); //except not really memcpy, it's FlashProgram based on saveFobState
+    // TODO checkout flash data
+    memcpy(temp_flash.packages[feature_num], package, sizeof(PACKAGE));
+    // TODO commit flash data, based on saveFobState
+  }
+}
+
+void prep_drbg(void)
+{
+  if (sb_hmac_drbg_reseed_required(&drbg, 0x20)) {
+    if (sb_hmac_drbg_generate(&drbg, ENTROPY[seed_idx], 32) != SB_SUCCESS) {
+      //worst-case fallback entropy changer
+      ENTROPY[seed_idx][seq%32] = NONCE[seq%16];
+      ENTROPY[seed_idx][(seq+5)%32] = NONCE[(seq+3)%16];
+    }
+    seed_idx++; seed_idx %= NUM_SEEDS;
+    sb_hmac_drbg_reseed(&drbg, ENTROPY[seed_idx], 32, (uint8_t *)&seq, 8);
   }
 }
 
@@ -276,10 +305,10 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   get_challenge(&challenge);
   
   // Generate Response
-  //TODO sign challenge and put it in &response.unlock
+  gen_response(&challenge, &response)
   
   // Prepare Feature Requests
-  memcpy(&response.feature1, self.flash_data.packages, sizeof(response.feature1)*3);
+  memcpy(&response.feature1, self_flash.packages, sizeof(response.feature1)*3);
 
   // Send Response with Features
   finalize_unlock(&response);
@@ -287,6 +316,39 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   // Zero out challenge and response
   memset(&challenge, 0, sizeof(challenge));
   memset(&response, 0, sizeof(response));
+}
+
+
+void gen_response(CHALLENGE *challenge, RESPONSE *response)
+{
+  sb_sw_context_t sb_ctx;
+  sb_sw_message_digest_t _hash;
+  sb_sw_private_t priv;
+
+  // Zero out empy data
+  memset(&sb_ctx, 0, sizeof(sb_ctx));
+  memset(&priv, 0, sizeof(priv));
+
+  // Prepare DRBG
+  prep_drbg();
+
+  // Only paired fobs respond to challenges
+  if(!PFOB) {
+    return;
+  }
+
+  // Get signing key
+  if(OG_PFOB) {
+    // Get car priv from EEPROM
+
+  }
+  else {
+    // Get car priv from FLASH
+
+  }
+  
+  // Generate response
+  sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
 }
 
 /**
