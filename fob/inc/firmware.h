@@ -83,7 +83,8 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response);
 
 // Helper functions
 void tryHostCmd(void);
-void tryButton(void) 
+void tryButton(void);
+void prep_drbg(void);
 void saveFobState(FLASH_DATA *flash_data);
 
 #endif

@@ -81,6 +81,15 @@ int main(void)
     saveFobState(&fob_state_ram);
   }
 
+  // instantiate drbg
+  if (sb_hmac_drbg_init(&drbg, ENTROPY[seed_idx], 32, NONCE, 16, depl_id_str, 8) != SB_SUCCESS) {
+    //failed to initialize random generator
+    sss_internal(SCEWL_ERR, SCEWL_SSS_REG);
+    memset(rsp, 0, len);
+    return SCEWL_ERR;
+  }
+  seed_idx++; seed_idx %= NUM_SEEDS;
+
   // Initialize HOST UART
   uart_init();
 
@@ -258,6 +267,19 @@ void enableFeature(FLASH_DATA *fob_state_ram)
   }
 }
 
+void prep_drbg(void)
+{
+  if (sb_hmac_drbg_reseed_required(&drbg, 0x20)) {
+    if (sb_hmac_drbg_generate(&drbg, ENTROPY[seed_idx], 32) != SB_SUCCESS) {
+      //worst-case fallback entropy changer
+      ENTROPY[seed_idx][seq%32] = NONCE[seq%16];
+      ENTROPY[seed_idx][(seq+5)%32] = NONCE[(seq+3)%16];
+    }
+    seed_idx++; seed_idx %= NUM_SEEDS;
+    sb_hmac_drbg_reseed(&drbg, ENTROPY[seed_idx], 32, (uint8_t *)&seq, 8);
+  }
+}
+
 /**
  * @brief Function that handles the fob unlocking a car
  *
@@ -299,19 +321,34 @@ void unlockCar(FLASH_DATA *fob_state_ram)
 
 void gen_response(CHALLENGE *challenge, RESPONSE *response)
 {
+  sb_sw_context_t sb_ctx;
+  sb_sw_message_digest_t _hash;
+  sb_sw_private_t priv;
+
+  // Zero out empy data
+  memset(&sb_ctx, 0, sizeof(sb_ctx));
+  memset(&priv, 0, sizeof(priv));
+
+  // Prepare DRBG
+  prep_drbg();
+
+  // Only paired fobs respond to challenges
   if(!PFOB) {
     return;
   }
 
   // Get signing key
   if(OG_PFOB) {
-    // get car priv from EEPROM
+    // Get car priv from EEPROM
+
   }
   else {
-    // get car priv from flash
+    // Get car priv from FLASH
+
   }
-  sb_sw
-  //TODO sign challenge and put it in &response->unlock
+  
+  // Generate response
+  sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
 }
 
 /**
