@@ -22,9 +22,9 @@ typedef struct {//TODO
 
 typedef struct {
   sb_sw_signature_t unlock;
-  sb_sw_signature_t feature1;
-  sb_sw_signature_t feature2;
-  sb_sw_signature_t feature3;
+  PACKAGE feature1;
+  PACKAGE feature2;
+  PACKAGE feature3;
 } RESPONSE;
 
 /*** Macro Definitions ***/
