@@ -85,6 +85,10 @@ int main(void) {
   // Initialize board link UART
   setup_board_link();
 
+  volatile uint32_t clock = SysCtlClockGet();
+  uint32_t delay = 160000000;
+  SysCtlDelay(delay);
+
   while (true) {
 
     unlockCar();
