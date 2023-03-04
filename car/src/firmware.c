@@ -34,9 +34,8 @@
 #include "uart.h"
 #include "firmware.h"
 
-// Declare password
-const uint8_t pass[] = PASSWORD;
-const uint8_t car_id[] = CAR_ID;
+/*** Macros ***/
+#define ZERO(M) memset(&M, 0, sizeof(M))
 
 /**
  * @brief Main function for the car example
@@ -68,9 +67,8 @@ void tryUnlock(void) {
   CHALLENGE challenge;
   RESPONSE response;
 
-  // Zero out challenge and response
-  memset(&challenge, 0, sizeof(challenge));
-  memset(&response, 0, sizeof(response));
+  // Clear response
+  ZERO(response);
 
   // Make sure the fob is requesting an unlock
   fob_requests_unlock() &&
@@ -86,16 +84,12 @@ void tryUnlock(void) {
 
   // Check whether the response to the challenge was valid
   verify_response(&challenge, &response) &&
-
-  // Zero out challenge and response
-  memset(&challenge, 0, sizeof(challenge)) &&
-  memset(&response, 0, sizeof(response)) &&
   
   // Unlock the car
   unlockCar() &&
 
   // Start the car
-  startCar();
+  startCar(&reponse);
 }
 
 bool gen_challenge(CHALLENGE *challenge) {
@@ -111,17 +105,21 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
 bool unlockCar(void) {
   uint8_t eeprom_message[64];
 
-  // Zero out eeprom message
-  memset(&eeprom_message, 0, sizeof(eeprom_message));
+  // Clear eeprom message
+  ZERO(eeprom_message);
 
+  // Initialize EEPROM
+  if(EEPROMInit() != EEPROM_INIT_OK){
+    return false;
+  }
   // Load Unlock Success Message
   EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, UNLOCK_EEPROM_SIZE);
 
   // Display Unlock Success Message
   uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
 
-  // Zero out eeprom message
-  memset(&eeprom_message, 0, sizeof(eeprom_message));
+  // Clear eeprom message
+  ZERO(eeprom_message);
 
   return true;
 }
@@ -129,37 +127,22 @@ bool unlockCar(void) {
 /**
  * @brief Function that handles starting of car - feature list
  */
-bool startCar(void) {
-  // Create a message struct variable for receiving data
-  MESSAGE_PACKET message;
-  uint8_t buffer[256];
-  message.buffer = buffer;
+void startCar(RESPONSE *response) {
+  uint32_t i;
+  uint8_t eeprom_message[64];
 
-  // Receive start message
-  receive_board_message_by_type(&message, START_MAGIC);
-
-  PACKAGE *feature_info = (PACKAGE *)buffer;
-
-  // Verify correct car id
-  if (strcmp((char *)car_id, (char *)feature_info->car_id)) {
-    return false;
-  }
-
-  // Print out features for all active features
-  for (int i = 0; i < feature_info->num_active; i++) {
-    uint8_t eeprom_message[64];
-
-    uint32_t offset = feature_info->features[i] * FEATURE_SIZE;
-
-    if (offset > FEATURE_END) {
-        offset = FEATURE_END;
+  // Print out feature messages for all active features
+  for (i = 1; i <= NUM_FEATURES; i++) {
+    package = (PACKAGE *packages)[i];
+    if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
+      // Initialize EEPROM
+      if(EEPROMInit() != EEPROM_INIT_OK){
+        return;
+      }
+      // Send feature message
+      EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - i * FEATURE_SIZE, FEATURE_SIZE);
+      uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
     }
-
-    EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - offset, FEATURE_SIZE);
-
-    uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
   }
-
-  return true;
 }
 

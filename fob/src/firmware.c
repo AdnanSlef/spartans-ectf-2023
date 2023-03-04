@@ -32,6 +32,9 @@
 #include "uart.h"
 #include "firmware.h"
 
+/*** Macros ***/
+#define ZERO(M) memset(&M, 0, sizeof(M))
+
 /*** Globals ***/
 // Handle Hardware Switch
 uint8_t previous_sw_state = GPIO_PIN_4;
@@ -40,37 +43,6 @@ uint8_t current_sw_state = GPIO_PIN_4;
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
 
-bool init_drbg(void)
-{
-  ENTROPY temp_entropy;
-  sb_sw_private_t car_privkey;
-
-  // Check for Entropy Error
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
-  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
-  return false;
-
-  // Initialize DRBG
-  get_secret(&car_privkey, NULL) &&
-  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
-  || return false;
-
-  // Clear private key
-  memset(car_privkey, 0, sizeof(car_privkey));
-
-  //Checkout Entropy
-  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
-
-  // Update Entropy
-  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
-  || return false;
-
-  //Commit Entropy
-  !FlashErase(ENTROPY_FLASH) &&
-  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
-  return true;
-}
 
 /**
  * @brief Main function for the fob example
@@ -190,6 +162,38 @@ void tryButton(void) {
   previous_sw_state = current_sw_state;
 }
 
+
+bool init_drbg(void)
+{
+  ENTROPY temp_entropy;
+  sb_sw_private_t car_privkey;
+
+  // Check for Entropy Error
+  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
+  return false;
+
+  // Initialize DRBG
+  get_secret(&car_privkey, NULL) &&
+  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
+  || return false;
+
+  // Clear private key
+  ZERO(car_privkey);
+
+  //Checkout Entropy
+  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+
+  // Update Entropy
+  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
+  || return false;
+
+  //Commit Entropy
+  !FlashErase(ENTROPY_FLASH) &&
+  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
+  return true;
+}
 
 /**
  * @brief Function that carries out pairing of the fob
@@ -332,10 +336,6 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   // Paired fob only
   PFOB || return;
 
-  // Zero out challenge and response
-  memset(&challenge, 0, sizeof(challenge));
-  memset(&response, 0, sizeof(response));
-
   // Request the Car to Unlock
   request_unlock();
 
@@ -343,17 +343,13 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   get_challenge(&challenge);
   
   // Generate Response
-  gen_response(&challenge, &response)
+  gen_response(&challenge, &response);
   
   // Prepare Feature Requests
   memcpy(&response.feature1, self_flash.packages, sizeof(response.feature1)*3);
 
   // Send Response with Features
   finalize_unlock(&response);
-
-  // Zero out challenge and response
-  memset(&challenge, 0, sizeof(challenge));
-  memset(&response, 0, sizeof(response));
 }
 
 
@@ -366,9 +362,8 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   // Only paired fobs respond to challenges
   PFOB || return;
 
-  // Zero out empy data
-  memset(&sb_ctx, 0, sizeof(sb_ctx));
-  memset(&priv, 0, sizeof(priv));
+  // Clear empy data
+  ZERO(sb_ctx);
 
   // Prepare DRBG
   prep_drbg();
@@ -378,6 +373,9 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   
   // Generate response
   sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
+
+  // Clear key
+  ZERO(priv);
 }
 
 /**
