@@ -46,18 +46,15 @@ bool init_drbg(void)
   sb_sw_private_t car_privkey;
 
   // Check for Entropy Error
-  if( ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
-      ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
-      ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&)
-  {
-    return -1;
-  }
-                                                      // todo car_privkey = car privkey from EEPROM/FLASH, name as later use
-  get_secret(&car_privkey, NULL);
-  if(sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) != SB_SUCCESS)
-    // If failed to initialize, return
-    return -1;
-  }
+  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
+  return false;
+
+  // Initialize DRBG
+  get_secret(&car_privkey, NULL) &&
+  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
+  || return false;
 
   // Clear private key
   memset(car_privkey, 0, sizeof(car_privkey));
@@ -66,15 +63,13 @@ bool init_drbg(void)
   memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  if(sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) {
-    // If failed to generate, return
-    return -1;
-  }
+  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
+  || return false;
 
   //Commit Entropy
-  FlashErase(ENTROPY_FLASH);
-  FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
-  /********************/
+  !FlashErase(ENTROPY_FLASH) &&
+  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
+  return true;
 }
 
 /**
@@ -301,22 +296,27 @@ void enableFeature(FLASH_DATA *fob_state_ram)
   }
 }
 
-void get_secret(sb_sw_private_t *priv, uint32_t *pin) {
+bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
   #if OG_PFOB == 1
+    if(EEPROMInit() != EEPROM_INIT_OK){
+      return false;
+    }
     if(priv) {
-      // TODO get car private key from EEPROM
+      EEPROMRead(priv, offsetof(FOB_DATA, car_privkey), sizeof(sb_sw_private_t));
     }
     if(pin) {
-      // TODO get pin from EEPROM
+      EEPROMRead(pin, offsetof(FOB_DATA, pin), sizeof(uint32_t));
     }
+    return true;
   #endif
   #if OG_UFOB == 1
     if(priv) {
-      // TODO get car private key from FLASH
+      memcpy(priv, FLASH_DATA.car_privkey, sizeof(sb_sw_private_t));
     }
     if(pin) {
-      // TODO get pin from FLASH
+      *pin = FOB_DATA_FLASH.pin;
     }
+    return true;
   #endif
 }
 

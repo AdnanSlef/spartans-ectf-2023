@@ -70,7 +70,7 @@ typedef struct
   uint8_t paired;
   PAIR_PACKET pair_info;
   FEATURE_DATA feature_info;
-} FLASH_DATA;
+} FOB_DATA;
 
 /*** Function definitions ***/
 // Core functions
