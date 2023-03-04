@@ -37,6 +37,9 @@ include ${TIVA_ROOT}/makedefs
 # Optimizations
 CFLAGS+=-Os
 
+# Defenses
+CFLAGS+=-fstack-protector-all
+
 # check that parameters are defined
 check_defined = \
 	$(strip $(foreach 1,$1, \

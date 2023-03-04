@@ -40,6 +40,43 @@ uint8_t current_sw_state = GPIO_PIN_4;
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
 
+bool init_drbg(void)
+{
+  ENTROPY temp_entropy;
+  sb_sw_private_t car_privkey;
+
+  // Check for Entropy Error
+  if( ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+      ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+      ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&)
+  {
+    return -1;
+  }
+                                                      // todo car_privkey = car privkey from EEPROM/FLASH, name as later use
+  get_secret(&car_privkey, NULL);
+  if(sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) != SB_SUCCESS)
+    // If failed to initialize, return
+    return -1;
+  }
+
+  // Clear private key
+  memset(car_privkey, 0, sizeof(car_privkey));
+
+  //Checkout Entropy
+  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+
+  // Update Entropy
+  if(sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) {
+    // If failed to generate, return
+    return -1;
+  }
+
+  //Commit Entropy
+  FlashErase(ENTROPY_FLASH);
+  FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+  /********************/
+}
+
 /**
  * @brief Main function for the fob example
  *
@@ -74,21 +111,17 @@ int main(void)
     memcpy(&fob_state_ram, fob_state_flash, FLASH_DATA_SIZE);
   }
 
-  // This will run on first boot to initialize features
+  // This will run on first boot to initialize features, TODO remove
   if (fob_state_ram.feature_info.num_active == 0xFF)
   {
     fob_state_ram.feature_info.num_active = 0;
     saveFobState(&fob_state_ram);
   }
 
-  // instantiate drbg
-  if (sb_hmac_drbg_init(&drbg, ENTROPY[seed_idx], 32, NONCE, 16, depl_id_str, 8) != SB_SUCCESS) {
-    //failed to initialize random generator
-    sss_internal(SCEWL_ERR, SCEWL_SSS_REG);
-    memset(rsp, 0, len);
-    return SCEWL_ERR;
+  // Initialize DRBG
+  if (!init_drbg()) {
+    return -1;
   }
-  seed_idx++; seed_idx %= NUM_SEEDS;
 
   // Initialize HOST UART
   uart_init();
@@ -129,7 +162,7 @@ void tryHostCmd(void) {
     if(cmd == P_PAIR_CMD) {
       // if fob is paired, pair another fob
       if(PFOB) {
-        pPairFob(&fob_state_ram); //todo timeout
+        pPairFob(&fob_state_ram);
       }
     }
     if(cmd == U_PAIR_CMD) {
@@ -161,6 +194,7 @@ void tryButton(void) {
   }
   previous_sw_state = current_sw_state;
 }
+
 
 /**
  * @brief Function that carries out pairing of the fob
@@ -267,17 +301,23 @@ void enableFeature(FLASH_DATA *fob_state_ram)
   }
 }
 
-void prep_drbg(void)
-{
-  if (sb_hmac_drbg_reseed_required(&drbg, 0x20)) {
-    if (sb_hmac_drbg_generate(&drbg, ENTROPY[seed_idx], 32) != SB_SUCCESS) {
-      //worst-case fallback entropy changer
-      ENTROPY[seed_idx][seq%32] = NONCE[seq%16];
-      ENTROPY[seed_idx][(seq+5)%32] = NONCE[(seq+3)%16];
+void get_secret(sb_sw_private_t *priv, uint32_t *pin) {
+  #if OG_PFOB == 1
+    if(priv) {
+      // TODO get car private key from EEPROM
     }
-    seed_idx++; seed_idx %= NUM_SEEDS;
-    sb_hmac_drbg_reseed(&drbg, ENTROPY[seed_idx], 32, (uint8_t *)&seq, 8);
-  }
+    if(pin) {
+      // TODO get pin from EEPROM
+    }
+  #endif
+  #if OG_UFOB == 1
+    if(priv) {
+      // TODO get car private key from FLASH
+    }
+    if(pin) {
+      // TODO get pin from FLASH
+    }
+  #endif
 }
 
 /**
