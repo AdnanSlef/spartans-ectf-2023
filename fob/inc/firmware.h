@@ -31,45 +31,33 @@
 /*** Structure definitions ***/
 typedef sb_sw_signature_t PACKAGE;
 
-typedef struct {//TODO
+typedef struct {
   uint8_t data[64];
 } CHALLENGE;
 
 typedef struct {
   sb_sw_signature_t unlock;
-  sb_sw_signature_t feature1;
-  sb_sw_signature_t feature2;
-  sb_sw_signature_t feature3;
+  PACKAGE feature1;
+  PACKAGE feature2;
+  PACKAGE feature3;
 } RESPONSE;
-
-// Defines a struct for the format of an enable message
-typedef struct
-{
-  uint8_t car_id[8];
-  uint8_t feature;
-} ENABLE_PACKET;
 
 // Defines a struct for the format of a pairing message
 typedef struct
 {
-  uint8_t car_id[8];
-  uint8_t password[8];
-  uint8_t pin[8];
+  sb_sw_private_t car_priv;
+  uint32_t pin;
 } PAIR_PACKET;
-
-typedef struct
-{
-  uint8_t car_id[8];
-  uint8_t num_active;
-  uint8_t features[NUM_FEATURES];
-} FEATURE_DATA;
 
 // Defines a struct for storing the state in flash
 typedef struct
 {
-  uint8_t paired;
-  PAIR_PACKET pair_info;
-  FEATURE_DATA feature_info;
+  uint32_t paired;
+  uint32_t pin;
+  sb_sw_private_t car_priv;
+  PACKAGE feature1;
+  PACKAGE feature2;
+  PACKAGE feature3;
 } FOB_DATA;
 
 /*** Function definitions ***/
@@ -86,5 +74,7 @@ void tryHostCmd(void);
 void tryButton(void);
 void prep_drbg(void);
 void saveFobState(FLASH_DATA *flash_data);
+bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
+bool init_drbg(void);
 
 #endif

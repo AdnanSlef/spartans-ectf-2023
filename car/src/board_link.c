@@ -111,10 +111,10 @@ bool send_challenge(CHALLENGE *challenge) {
 
 /**
  * @brief Gets a response from the fob to the challenge that was sent
- * Times out after 1 second of 
+ * Times out after 1 second
  *
  * @param response [out] where to store the gathered response
- * @return bool true if fob is requesting unlock, false otherwise
+ * @return bool true if response is received timely, false otherwise
  */
 bool get_response(RESPONSE *response) {
   //read a defined number of bytes, but only for 1 second

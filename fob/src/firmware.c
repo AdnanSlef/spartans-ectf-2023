@@ -106,7 +106,7 @@ int main(void)
     memcpy(&fob_state_ram, fob_state_flash, FLASH_DATA_SIZE);
   }
 
-  // This will run on first boot to initialize features, TODO remove
+  // This will run on first boot to initialize features, TODO remove except on first boot need to pull eeprom to flash
   if (fob_state_ram.feature_info.num_active == 0xFF)
   {
     fob_state_ram.feature_info.num_active = 0;
@@ -198,10 +198,8 @@ void tryButton(void) {
  */
 void pPairFob(FLASH_DATA *fob_state_ram)
 {
-
-  if(!PFOB) {
-    return;
-  }
+  // Paired fob only
+  PFOB || return;
 
   // get pin from HOST_UART
   // if pin is invalid,
@@ -244,10 +242,12 @@ void uPairFob(FLASH_DATA *fob_state_ram)
   uint32_t PIN;
   TODO_KEYTYPE key;
 
+  // original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
     return;
   }
 
+  FOB_DATA data;
   // get_PIN(&PIN, PFOB_UART)
   // get_key(&key, PFOB_UART)
   // set_PIN(PIN)
@@ -278,9 +278,8 @@ void enableFeature(FLASH_DATA *fob_state_ram)
 {
   PACKAGE package;
   
-  if(!PFOB) {
-    return;
-  }
+  // Paired fob only
+  PFOB || return;
 
   // Get the feature number from the host
   uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
@@ -330,9 +329,8 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   CHALLENGE challenge;
   RESPONSE response;
 
-  if(!PFOB) {
-    return;
-  }
+  // Paired fob only
+  PFOB || return;
 
   // Zero out challenge and response
   memset(&challenge, 0, sizeof(challenge));
@@ -365,6 +363,9 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   sb_sw_message_digest_t _hash;
   sb_sw_private_t priv;
 
+  // Only paired fobs respond to challenges
+  PFOB || return;
+
   // Zero out empy data
   memset(&sb_ctx, 0, sizeof(sb_ctx));
   memset(&priv, 0, sizeof(priv));
@@ -372,20 +373,8 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   // Prepare DRBG
   prep_drbg();
 
-  // Only paired fobs respond to challenges
-  if(!PFOB) {
-    return;
-  }
-
   // Get signing key
-  if(OG_PFOB) {
-    // Get car priv from EEPROM
-
-  }
-  else {
-    // Get car priv from FLASH
-
-  }
+  get_secret(priv, NULL) || return;
   
   // Generate response
   sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
