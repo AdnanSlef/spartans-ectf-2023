@@ -117,7 +117,28 @@ bool send_challenge(CHALLENGE *challenge) {
  * @return bool true if response is received timely, false otherwise
  */
 bool get_response(RESPONSE *response) {
-  //read a defined number of bytes, but only for 1 second
-  //TODO timeout after 1 second, returning false
-  return false;
+  uint32_t counter = 0;
+  // 16000000/3 - Default clock speed of 16Mhz, SysCtlDelay() runs for 3 cycles
+  uint32_t max_counter = 5333333; 
+
+  uint8_t * buffer = (uint8_t *) response;
+  uint32_t buffer_length = sizeof(RESPONSE);
+  uint32_t i = 0;
+
+  bool success = false;
+
+  while (counter < max_counter) {
+    if (UARTCharsAvail(FOB_UART) && i < buffer_length) {
+      buffer[i] = UARTCharGetNonBlocking(FOB_UART);
+      i++;
+
+      if (i == buffer_length) {
+        success = true;
+        break;
+      }
+    }
+    counter++;
+  }
+
+  return success;
 }

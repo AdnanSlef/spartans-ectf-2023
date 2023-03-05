@@ -61,6 +61,15 @@ int main(void) {
 }
 
 /**
+ * @brief Sleeps for 5 seconds
+ *
+ */
+void SLEEP(void) {
+  // (16000000/3)*5
+  SysCtlDelay(26666665);
+}
+
+/**
  * @brief Function that handles unlocking of car
  */
 void tryUnlock(void) {
