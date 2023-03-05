@@ -57,6 +57,10 @@ int main(void)
   FLASH_DATA fob_state_ram;
   FLASH_DATA *fob_state_flash = (FLASH_DATA *)FOB_STATE_PTR;
 
+  // Ensure EEPROM peripheral is enabled
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
+  EEPROMInit();
+
 // If paired fob, initialize the system information
 #if PAIRED == 1
   if (fob_state_flash->paired == FLASH_UNPAIRED)
