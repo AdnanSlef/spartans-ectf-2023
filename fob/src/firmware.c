@@ -61,7 +61,7 @@ int main(void)
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-// If paired fob, initialize the system information
+// If paired fob, initialize the system information; TODO clean up main function removing unnecessary and replacing with what we need
 #if PAIRED == 1
   if (fob_state_flash->paired == FLASH_UNPAIRED)
   {
@@ -173,29 +173,31 @@ bool init_drbg(void)
   sb_sw_private_t car_privkey;
 
   // Check for Entropy Error
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
-  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
-  return false;
+  if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+     ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+     ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4])
+     return false;
 
   // Initialize DRBG
-  get_secret(&car_privkey, NULL) &&
-  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
-  || return false;
+  if(!(
+    get_secret(&car_privkey, NULL) &&
+    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), &car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
+    )) return false;
 
   // Clear private key
   ZERO(car_privkey);
 
   //Checkout Entropy
-  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+  memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
-  || return false;
+  if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy))
+    != SB_SUCCESS) return false;
 
-  //Commit Entropy
-  !FlashErase(ENTROPY_FLASH) &&
-  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
+  // Commit Entropy
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
+  
+  // Success
   return true;
 }
 
@@ -209,35 +211,13 @@ void pPairFob(FLASH_DATA *fob_state_ram)
   // Paired fob only
   PFOB || return;
 
+  // TODO implement:
   // get pin from HOST_UART
   // if pin is invalid,
   //    sleep(5) and return
   // if pin is valid,
   //    send PIN to UFOB_UART
   //    send key to UFOB_UART
-
-  // reference design below
-  MESSAGE_PACKET message;
-  // Start pairing transaction - fob is already paired
-  int16_t bytes_read;
-  uint8_t uart_buffer[8];
-  uart_write(HOST_UART, (uint8_t *)"P", 1);
-  bytes_read = uart_readline(HOST_UART, uart_buffer);
-
-  if (bytes_read == 6)
-  {
-    // If the pin is correct
-    if (!(strcmp((char *)uart_buffer,
-                  (char *)fob_state_ram->pair_info.pin)))
-    {
-      // Pair the new key by sending a PAIR_PACKET structure
-      // with required information to unlock door
-      message.message_len = sizeof(PAIR_PACKET);
-      message.magic = PAIR_MAGIC;
-      message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-      send_board_message(&message);
-    }
-  }
 }
 
 /**
@@ -248,33 +228,20 @@ void pPairFob(FLASH_DATA *fob_state_ram)
 void uPairFob(FLASH_DATA *fob_state_ram)
 {
   uint32_t PIN;
-  TODO_KEYTYPE key;
+  sb_sw_private_t key;
+  FOB_DATA data;
 
   // original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
     return;
   }
 
-  FOB_DATA data;
+  // TODO expand on pseudocode, then implement
   // get_PIN(&PIN, PFOB_UART)
   // get_key(&key, PFOB_UART)
   // set_PIN(PIN)
   // set_key(key)
   // PFOB true, UFOB false
-
-
-  // reference design below
-  MESSAGE_PACKET message;
-  // Start pairing transaction - fob is not paired
-  message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-  receive_board_message_by_type(&message, PAIR_MAGIC);
-  fob_state_ram->paired = FLASH_PAIRED;
-  strcpy((char *)fob_state_ram->feature_info.car_id,
-          (char *)fob_state_ram->pair_info.car_id);
-
-  uart_write(HOST_UART, (uint8_t *)"Paired", 6);
-
-  saveFobState(fob_state_ram);
 }
 
 /**
@@ -340,6 +307,8 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   // Paired fob only
   PFOB || return;
 
+  ZERO(response);
+
   // Request the Car to Unlock
   request_unlock();
 
@@ -373,7 +342,7 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   prep_drbg();
 
   // Get signing key
-  get_secret(priv, NULL) || return;
+  if(!get_secret(priv, NULL))return;
   
   // Generate response
   sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
