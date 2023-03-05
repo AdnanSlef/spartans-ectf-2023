@@ -12,10 +12,13 @@
 // Definitions for unlock message location in EEPROM
 #define UNLOCK_EEPROM_LOC 0x7C0
 #define UNLOCK_EEPROM_SIZE 64
+
 // Features Information
 #define NUM_FEATURES 3
 #define FEATURE_END UNLOCK_EEPROM_LOC
 #define FEATURE_SIZE 64
+
+#define ENDIAN 1
 
 /*** Structure definitions ***/
 typedef sb_sw_signature_t PACKAGE;
@@ -39,7 +42,7 @@ typedef struct {
 /*** Function definitions ***/
 // Core Functions
 void tryUnlock(void);
-bool startCar(void);
+void startCar(RESPONSE *response);
 bool unlockCar(void);
 
 // Security Functions

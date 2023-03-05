@@ -24,9 +24,10 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 
+#include "sb_all.h"
+
 #include "board_link.h"
 #include "uart.h"
-
 #include "firmware.h"
 
 /**

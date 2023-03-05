@@ -116,34 +116,36 @@ bool init_drbg(void)
   sb_sw_public_t car_pubkey;
 
   // Check for Entropy Error
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
-  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
-  return false;
+  if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+     ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+     ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4])
+     return false;
 
   // Get Car Public Key from EEPROM
-  if(EEPROMInit() != EEPROM_INIT_OK){
-    return false;
-  }
+  if(EEPROMInit() != EEPROM_INIT_OK) return false;
   EEPROMRead((uint32_t *)&car_pubkey, offsetof(CAR_DATA, car_pubkey), sizeof(car_pubkey));
 
+  // Check for EEPROM Error
+  if(((uint32_t*)car_pubkey)[0] == ((uint32_t*)car_pubkey)[1] &&
+     ((uint32_t*)car_pubkey)[2] == ((uint32_t*)car_pubkey)[3])
+     return false;
+
   // Initialize DRBG
-  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8) == SB_SUCCESS
-  || return false;
+  if(sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY),
+                       car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8)
+     != SB_SUCCESS)
+     return false;
 
-  // Clear private key
-  ZERO(car_privkey);
-
-  //Checkout Entropy
+  // Checkout Entropy
   memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
-  || return false;
+  if(sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
 
-  //Commit Entropy
-  !FlashErase(ENTROPY_FLASH) &&
-  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
+  // Commit Entropy
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return true;
+  
+  // Success
   return true;
 }
 
@@ -162,19 +164,21 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   uint8_t i;
 
   // Get Public Keys from EEPROM
-  EEPROMInit() == EEPROM_INIT_OK || return false;
+  if(EEPROMInit() != EEPROM_INIT_OK) return false;
   EEPROMRead((uint32_t *)&car_pubkey, offsetof(CAR_DATA, car_pubkey), sizeof(car_pubkey));
   EEPROMRead((uint32_t *)&host_pubkey, offsetof(CAR_DATA, host_pubkey), sizeof(host_pubkey));
 
   // Verify the challenge-response response
-  sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey, challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
-  == SB_SUCCESS || return false;
+  if(sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey,
+                                   challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
+     != SB_SUCCESS)
+     return false;
   ZERO(sb_ctx);
   ZERO(hash);
 
   // Verify each of the feature signatures
   for(i=1; i<=NUM_FEATURES; i++) {
-    package = (PACKAGE *response)[i];
+    package = ((PACKAGE *)response)[i];
     if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
       sb_sha256_init(&sha);
       sb_sha256_update(&sha, &car_pubkey, sizeof(car_pubkey));
@@ -216,10 +220,11 @@ bool unlockCar(void) {
 void startCar(RESPONSE *response) {
   uint32_t i;
   uint8_t eeprom_message[64];
+  PACKAGE package;
 
   // Print out feature messages for all active features
   for (i = 1; i <= NUM_FEATURES; i++) {
-    package = (PACKAGE *response)[i];
+    package = ((PACKAGE *)response)[i];
     if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
       // Initialize EEPROM
       if(EEPROMInit() != EEPROM_INIT_OK){
