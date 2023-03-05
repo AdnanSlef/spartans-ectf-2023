@@ -13,7 +13,11 @@
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
 
+// Endianness
 #define ENDIAN 1
+
+// Entropy
+#define ENTROPY_FLASH 0x3F800
 
 /*** Special Constants for Communication ***/
 #define ENABLE_CMD 0x10
@@ -61,6 +65,10 @@ typedef struct
   PACKAGE feature2;
   PACKAGE feature3;
 } FOB_DATA;
+
+typedef struct {
+  uint8_t data[0x400];
+} ENTROPY;
 
 /*** Function definitions ***/
 // Core functions

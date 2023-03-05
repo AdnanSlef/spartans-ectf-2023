@@ -211,35 +211,13 @@ void pPairFob(FLASH_DATA *fob_state_ram)
   // Paired fob only
   PFOB || return;
 
+  // TODO implement:
   // get pin from HOST_UART
   // if pin is invalid,
   //    sleep(5) and return
   // if pin is valid,
   //    send PIN to UFOB_UART
   //    send key to UFOB_UART
-
-  // reference design below
-  MESSAGE_PACKET message;
-  // Start pairing transaction - fob is already paired
-  int16_t bytes_read;
-  uint8_t uart_buffer[8];
-  uart_write(HOST_UART, (uint8_t *)"P", 1);
-  bytes_read = uart_readline(HOST_UART, uart_buffer);
-
-  if (bytes_read == 6)
-  {
-    // If the pin is correct
-    if (!(strcmp((char *)uart_buffer,
-                  (char *)fob_state_ram->pair_info.pin)))
-    {
-      // Pair the new key by sending a PAIR_PACKET structure
-      // with required information to unlock door
-      message.message_len = sizeof(PAIR_PACKET);
-      message.magic = PAIR_MAGIC;
-      message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-      send_board_message(&message);
-    }
-  }
 }
 
 /**
@@ -251,32 +229,19 @@ void uPairFob(FLASH_DATA *fob_state_ram)
 {
   uint32_t PIN;
   sb_sw_private_t key;
+  FOB_DATA data;
 
   // original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
     return;
   }
 
-  FOB_DATA data;
+  // TODO expand on pseudocode, then implement
   // get_PIN(&PIN, PFOB_UART)
   // get_key(&key, PFOB_UART)
   // set_PIN(PIN)
   // set_key(key)
   // PFOB true, UFOB false
-
-
-  // reference design below
-  MESSAGE_PACKET message;
-  // Start pairing transaction - fob is not paired
-  message.buffer = (uint8_t *)&fob_state_ram->pair_info;
-  receive_board_message_by_type(&message, PAIR_MAGIC);
-  fob_state_ram->paired = FLASH_PAIRED;
-  strcpy((char *)fob_state_ram->feature_info.car_id,
-          (char *)fob_state_ram->pair_info.car_id);
-
-  uart_write(HOST_UART, (uint8_t *)"Paired", 6);
-
-  saveFobState(fob_state_ram);
 }
 
 /**
@@ -342,6 +307,8 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   // Paired fob only
   PFOB || return;
 
+  ZERO(response);
+
   // Request the Car to Unlock
   request_unlock();
 
@@ -375,7 +342,7 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   prep_drbg();
 
   // Get signing key
-  get_secret(priv, NULL) || return;
+  if(!get_secret(priv, NULL))return;
   
   // Generate response
   sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
