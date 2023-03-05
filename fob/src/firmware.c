@@ -61,7 +61,7 @@ int main(void)
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-// If paired fob, initialize the system information
+// If paired fob, initialize the system information; TODO clean up main function removing unnecessary and replacing with what we need
 #if PAIRED == 1
   if (fob_state_flash->paired == FLASH_UNPAIRED)
   {
@@ -173,29 +173,31 @@ bool init_drbg(void)
   sb_sw_private_t car_privkey;
 
   // Check for Entropy Error
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
-  ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
-  ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
-  return false;
+  if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+     ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+     ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4])
+     return false;
 
   // Initialize DRBG
-  get_secret(&car_privkey, NULL) &&
-  sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
-  || return false;
+  if(!(
+    get_secret(&car_privkey, NULL) &&
+    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), &car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
+    )) return false;
 
   // Clear private key
   ZERO(car_privkey);
 
   //Checkout Entropy
-  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+  memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) == SB_SUCCESS
-  || return false;
+  if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy))
+    != SB_SUCCESS) return false;
 
-  //Commit Entropy
-  !FlashErase(ENTROPY_FLASH) &&
-  !FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY)) &&
+  // Commit Entropy
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
+  
+  // Success
   return true;
 }
 
@@ -248,7 +250,7 @@ void pPairFob(FLASH_DATA *fob_state_ram)
 void uPairFob(FLASH_DATA *fob_state_ram)
 {
   uint32_t PIN;
-  TODO_KEYTYPE key;
+  sb_sw_private_t key;
 
   // original unpaired fob only
   if(!(UFOB && OG_UFOB)) {

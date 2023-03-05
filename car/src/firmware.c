@@ -134,7 +134,7 @@ bool init_drbg(void)
      return false;
 
   // Initialize DRBG
-  if(sb_hmac_drbg_init(&drbg, (uint32_t*)ENTROPY_FLASH, sizeof(ENTROPY),
+  if(sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY),
                        &car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8)
      != SB_SUCCESS)
      return false;
@@ -146,7 +146,7 @@ bool init_drbg(void)
   if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
 
   // Commit Entropy
-  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return true;
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
   
   // Success
   return true;
