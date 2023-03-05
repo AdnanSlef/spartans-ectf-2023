@@ -28,6 +28,13 @@
 #define START_MAGIC 0x57
 #define BOARD_UART ((uint32_t)UART1_BASE)
 
+typedef struct {
+  uint32_t random1;
+  uint32_t random2;
+  uint32_t random3;
+  uint32_t random4;
+} RESPONSE;
+
 /**
  * @brief Structure for message between boards
  *

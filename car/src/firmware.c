@@ -85,14 +85,30 @@ int main(void) {
   // Initialize board link UART
   setup_board_link();
 
-  volatile uint32_t clock = SysCtlClockGet();
-  uint32_t delay = 160000000;
-  SysCtlDelay(delay);
+  // volatile uint32_t clock = SysCtlClockGet();
+  // uint32_t delay = 160000000;
+  // SysCtlDelay(delay);
 
-  while (true) {
+  while (true)
+  {
 
-    unlockCar();
+    // Non blocking UART polling
+    if (uart_avail(HOST_UART))
+    {
+      uint8_t uart_char = (uint8_t)uart_readb(HOST_UART);
+
+      RESPONSE resp;
+
+      if (uart_char == 'p') {
+        volatile bool r = get_response(&resp, HOST_UART);
+      }
+    }
   }
+
+  // while (true) {
+
+  //   unlockCar();
+  // }
 }
 
 /**

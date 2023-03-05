@@ -18,11 +18,13 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "inc/hw_uart.h"
+#include "inc/hw_nvic.h"
 
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
+#include "driverlib/systick.h"
 
 #include "board_link.h"
 
@@ -102,4 +104,36 @@ uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
   } while (message->magic != type);
 
   return message->message_len;
+}
+
+bool get_response(RESPONSE *response, uint32_t UART) {
+  SysTickPeriodSet(16000000);
+  HWREG(NVIC_ST_CURRENT) = 0; // Reset SysTick counter
+  SysTickEnable();
+
+  volatile uint32_t tick = SysTickValueGet();
+
+  uint8_t * buffer = (uint8_t *) response;
+  uint32_t buffer_length = sizeof(RESPONSE);
+  uint32_t i = 0;
+
+  bool success = false;
+
+  while (tick > 1000) {
+    if (UARTCharsAvail(UART) && i < buffer_length) {
+      buffer[i] = UARTCharGetNonBlocking(UART);
+      i++;
+
+      if (i == buffer_length) {
+        success = true;
+        break;
+      }
+    }
+
+    tick = SysTickValueGet();
+  }
+
+  SysTickDisable();
+
+  return success;
 }
