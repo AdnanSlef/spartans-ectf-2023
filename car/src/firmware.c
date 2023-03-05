@@ -153,12 +153,12 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   sb_sw_public_t host_pubkey;
   sb_sw_public_t car_pubkey;
   PACKAGE package;
-  uint32_t i;
+  uint8_t i;
 
   //TODO get car_pubkey from eeprom
 
   // Verify the challenge-response response
-  sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey, challenge, sizeof(CHALLENGE), &drbg)
+  sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey, challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
   == SB_SUCCESS || return false;
   ZERO(sb_ctx);
   ZERO(hash);
@@ -167,8 +167,11 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   for(i=1; i<=NUM_FEATURES; i++) {
     package = (PACKAGE *response)[i];
     if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
-      //TODO digest
-      if(sb_sw_verify_signature() != SB_SUCCESS) {
+      sb_sha256_init(&sha);
+      sb_sha256_update(&sha, &car_pubkey, sizeof(car_pubkey));
+      sb_sha256_update(&sha, &i, sizeof(i));
+      sb_sha256_finish(&sha, &hash);
+      if(sb_sw_verify_signature(&sb_ctx, &package, &car_pubkey, &hash, &drbg, SB_SW_CURVE_P256, ENDIAN) != SB_SUCCESS) {
         return false;
       }
     }
