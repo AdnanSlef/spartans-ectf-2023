@@ -31,6 +31,11 @@ typedef struct {
   PACKAGE feature3;
 } RESPONSE;
 
+typedef struct {
+  sb_sw_public_t car_pubkey;
+  sb_sw_public_t host_pubkey;
+} CAR_DATA;
+
 /*** Function definitions ***/
 // Core Functions
 void tryUnlock(void);
