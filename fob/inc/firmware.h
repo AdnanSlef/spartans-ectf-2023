@@ -13,6 +13,8 @@
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
 
+#define ENDIAN 1
+
 /*** Special Constants for Communication ***/
 #define ENABLE_CMD 0x10
 #define P_PAIR_CMD 0x20
