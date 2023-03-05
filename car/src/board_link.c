@@ -18,6 +18,8 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "inc/hw_uart.h"
+#include "inc/hw_nvic.h"
+#include "driverlib/systick.h"
 
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
@@ -118,9 +120,11 @@ bool send_challenge(CHALLENGE *challenge) {
  * @return bool true if response is received timely, false otherwise
  */
 bool get_response(RESPONSE *response) {
-  uint32_t counter = 0;
-  // 16000000/3 - Default clock speed of 16Mhz, SysCtlDelay() runs for 3 cycles
-  uint32_t max_counter = 5333333; 
+  SysTickPeriodSet(16000000);
+  HWREG(NVIC_ST_CURRENT) = 0; // Reset SysTick counter
+  SysTickEnable();
+
+  volatile uint32_t tick = SysTickValueGet();
 
   uint8_t * buffer = (uint8_t *) response;
   uint32_t buffer_length = sizeof(RESPONSE);
@@ -128,7 +132,7 @@ bool get_response(RESPONSE *response) {
 
   bool success = false;
 
-  while (counter < max_counter) {
+  while (tick > 1000) {
     if (UARTCharsAvail(FOB_UART) && i < buffer_length) {
       buffer[i] = UARTCharGetNonBlocking(FOB_UART);
       i++;
@@ -138,8 +142,11 @@ bool get_response(RESPONSE *response) {
         break;
       }
     }
-    counter++;
+
+    tick = SysTickValueGet();
   }
+
+  SysTickDisable();
 
   return success;
 }
