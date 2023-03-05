@@ -121,8 +121,13 @@ bool init_drbg(void)
   ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4] &&
   return false;
 
+  // Get Car Public Key from EEPROM
+  if(EEPROMInit() != EEPROM_INIT_OK){
+    return false;
+  }
+  EEPROMRead((uint32_t *)&car_pubkey, offsetof(CAR_DATA, car_pubkey), sizeof(car_pubkey));
+
   // Initialize DRBG
-  //TODO get car_pubkey from eeprom
   sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY), car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8) == SB_SUCCESS
   || return false;
 
@@ -152,13 +157,17 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   sb_sw_message_digest_t hash;
   sb_sw_public_t host_pubkey;
   sb_sw_public_t car_pubkey;
+  sb_sw_public_t host_pubkey;
   PACKAGE package;
-  uint32_t i;
+  uint8_t i;
 
-  //TODO get car_pubkey from eeprom
+  // Get Public Keys from EEPROM
+  EEPROMInit() == EEPROM_INIT_OK || return false;
+  EEPROMRead((uint32_t *)&car_pubkey, offsetof(CAR_DATA, car_pubkey), sizeof(car_pubkey));
+  EEPROMRead((uint32_t *)&host_pubkey, offsetof(CAR_DATA, host_pubkey), sizeof(host_pubkey));
 
   // Verify the challenge-response response
-  sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey, challenge, sizeof(CHALLENGE), &drbg)
+  sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey, challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
   == SB_SUCCESS || return false;
   ZERO(sb_ctx);
   ZERO(hash);
@@ -167,8 +176,11 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   for(i=1; i<=NUM_FEATURES; i++) {
     package = (PACKAGE *response)[i];
     if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
-      //TODO digest
-      if(sb_sw_verify_signature() != SB_SUCCESS) {
+      sb_sha256_init(&sha);
+      sb_sha256_update(&sha, &car_pubkey, sizeof(car_pubkey));
+      sb_sha256_update(&sha, &i, sizeof(i));
+      sb_sha256_finish(&sha, &hash);
+      if(sb_sw_verify_signature(&sb_ctx, &package, &host_pubkey, &hash, &drbg, SB_SW_CURVE_P256, ENDIAN) != SB_SUCCESS) {
         return false;
       }
     }

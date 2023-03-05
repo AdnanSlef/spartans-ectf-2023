@@ -8,15 +8,19 @@
 #ifndef CAR_FIRMWARE_H
 #define CAR_FIRMWARE_H
 
-/*** Features Information ***/
+/*** Macro Definitions ***/
+// Definitions for unlock message location in EEPROM
+#define UNLOCK_EEPROM_LOC 0x7C0
+#define UNLOCK_EEPROM_SIZE 64
+// Features Information
 #define NUM_FEATURES 3
-#define FEATURE_END 0x7C0
+#define FEATURE_END UNLOCK_EEPROM_LOC
 #define FEATURE_SIZE 64
 
 /*** Structure definitions ***/
 typedef sb_sw_signature_t PACKAGE;
 
-typedef struct {//TODO
+typedef struct {
   uint8_t data[64];
 } CHALLENGE;
 
@@ -27,13 +31,8 @@ typedef struct {
   PACKAGE feature3;
 } RESPONSE;
 
-/*** Macro Definitions ***/
-// Definitions for unlock message location in EEPROM
-#define UNLOCK_EEPROM_LOC 0x7C0
-#define UNLOCK_EEPROM_SIZE 64
-
 /*** Function definitions ***/
-// Core functions
+// Core Functions
 void tryUnlock(void);
 bool startCar(void);
 bool unlockCar(void);
@@ -41,6 +40,9 @@ bool unlockCar(void);
 // Security Functions
 bool gen_challenge(CHALLENGE *challenge);
 bool verify_response(CHALLENGE *challenge, RESPONSE *response);
+
+// Helper Functions
 void SLEEP(void);
+bool init_drbg(void);
 
 #endif
