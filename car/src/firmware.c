@@ -19,6 +19,7 @@
 #include "inc/hw_ints.h"
 #include "inc/hw_memmap.h"
 
+#include "driverlib/flash.h"
 #include "driverlib/eeprom.h"
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
@@ -40,6 +41,8 @@
 /*** Globals ***/
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
+
+const PACKAGE NON_PACKAGE = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 /**
  * @brief Main function for the car example
@@ -107,7 +110,7 @@ void tryUnlock(void) {
   unlockCar() &&
 
   // Start the car
-  startCar(&reponse);
+  startCar(&response);
 }
 
 bool init_drbg(void)
@@ -115,7 +118,7 @@ bool init_drbg(void)
   ENTROPY temp_entropy;
   sb_sw_public_t car_pubkey;
 
-  // Check for Entropy Error
+  // Check for Entropy Error; TODO get the entropy into flash to begin with
   if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
      ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
      ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4])
@@ -126,21 +129,21 @@ bool init_drbg(void)
   EEPROMRead((uint32_t *)&car_pubkey, offsetof(CAR_DATA, car_pubkey), sizeof(car_pubkey));
 
   // Check for EEPROM Error
-  if(((uint32_t*)car_pubkey)[0] == ((uint32_t*)car_pubkey)[1] &&
-     ((uint32_t*)car_pubkey)[2] == ((uint32_t*)car_pubkey)[3])
+  if(((uint32_t*)&car_pubkey)[0] == ((uint32_t*)&car_pubkey)[1] &&
+     ((uint32_t*)&car_pubkey)[2] == ((uint32_t*)&car_pubkey)[3])
      return false;
 
   // Initialize DRBG
-  if(sb_hmac_drbg_init(&drbg, ENTROPY_FLASH, sizeof(ENTROPY),
-                       car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8)
+  if(sb_hmac_drbg_init(&drbg, (uint32_t*)ENTROPY_FLASH, sizeof(ENTROPY),
+                       &car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8)
      != SB_SUCCESS)
      return false;
 
   // Checkout Entropy
-  memcpy(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY));
+  memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  if(sb_hmac_drbg_generate(&drbg, temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
+  if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
 
   // Commit Entropy
   if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return true;
@@ -159,7 +162,6 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   sb_sw_message_digest_t hash;
   sb_sw_public_t host_pubkey;
   sb_sw_public_t car_pubkey;
-  sb_sw_public_t host_pubkey;
   PACKAGE package;
   uint8_t i;
 
@@ -179,7 +181,7 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   // Verify each of the feature signatures
   for(i=1; i<=NUM_FEATURES; i++) {
     package = ((PACKAGE *)response)[i];
-    if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
+    if(memcmp(&package, &NON_PACKAGE, sizeof(PACKAGE))) {
       sb_sha256_init(&sha);
       sb_sha256_update(&sha, &car_pubkey, sizeof(car_pubkey));
       sb_sha256_update(&sha, &i, sizeof(i));
@@ -217,7 +219,7 @@ bool unlockCar(void) {
 /**
  * @brief Function that handles starting of car - feature list
  */
-void startCar(RESPONSE *response) {
+bool startCar(RESPONSE *response) {
   uint32_t i;
   uint8_t eeprom_message[64];
   PACKAGE package;
@@ -225,15 +227,16 @@ void startCar(RESPONSE *response) {
   // Print out feature messages for all active features
   for (i = 1; i <= NUM_FEATURES; i++) {
     package = ((PACKAGE *)response)[i];
-    if(memcmp(&package, NON_PACKAGE, sizeof(PACKAGE))) {
+    if(memcmp(&package, &NON_PACKAGE, sizeof(PACKAGE))) {
       // Initialize EEPROM
       if(EEPROMInit() != EEPROM_INIT_OK){
-        return;
+        return false;
       }
       // Send feature message
       EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - i * FEATURE_SIZE, FEATURE_SIZE);
       uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
     }
   }
+  return true;
 }
 

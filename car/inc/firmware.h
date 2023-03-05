@@ -18,6 +18,10 @@
 #define FEATURE_END UNLOCK_EEPROM_LOC
 #define FEATURE_SIZE 64
 
+// Entropy
+#define ENTROPY_FLASH 0x3FC00
+
+// Endianness
 #define ENDIAN 1
 
 /*** Structure definitions ***/
@@ -39,10 +43,14 @@ typedef struct {
   sb_sw_public_t host_pubkey;
 } CAR_DATA;
 
+typedef struct {
+  uint8_t data[0x400];
+} ENTROPY;
+
 /*** Function definitions ***/
 // Core Functions
 void tryUnlock(void);
-void startCar(RESPONSE *response);
+bool startCar(RESPONSE *response);
 bool unlockCar(void);
 
 // Security Functions

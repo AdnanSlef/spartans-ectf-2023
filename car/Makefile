@@ -38,7 +38,8 @@ include ${TIVA_ROOT}/makedefs
 CFLAGS+=-Os
 
 # Defenses
-CFLAGS+=-fstack-protector-all
+# CFLAGS+=-fstack-protector-all
+
 
 # check that parameters are defined
 check_defined = \
@@ -79,7 +80,7 @@ VPATH+=${SBPATH}/include
 IPATH+=${SBPATH}/include
 IPATH+=${SBPATH}/src
 
-# add compiler flag to allow sweet-b to work on Cortex-M3
+# add compiler flag to allow sweet-b to work on Cortex-M4
 CFLAGS+=-DSB_WORD_SIZE=2
 
 # disable the unused curve
