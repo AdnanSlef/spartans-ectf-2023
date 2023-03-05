@@ -41,5 +41,6 @@ bool unlockCar(void);
 // Security Functions
 bool gen_challenge(CHALLENGE *challenge);
 bool verify_response(CHALLENGE *challenge, RESPONSE *response);
+void SLEEP(void);
 
 #endif
