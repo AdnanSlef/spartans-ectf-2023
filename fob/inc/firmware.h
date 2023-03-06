@@ -8,6 +8,8 @@
 #ifndef FOB_FIRMWARE_H
 #define FOB_FIRMWARE_H
 
+#include "sb_all.h"
+
 /*** Features Information ***/
 #define NUM_FEATURES 3
 #define FEATURE_END 0x7C0
