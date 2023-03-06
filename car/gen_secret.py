@@ -17,6 +17,7 @@ import argparse
 from pathlib import Path
 import Crypto.PublicKey.ECC as ecc
 from Crypto.Util.number import bytes_to_long, long_to_bytes
+from Crypto.Random import get_random_bytes
 
 ECC_PRIVSIZE = 32
 ECC_PUBSIZE = ECC_PRIVSIZE * 2
@@ -53,19 +54,22 @@ def main():
     
     # Load host pubkey
     host_pubkey_file = args.secrets_dir / "host_pubkey.PEM"
-    
     with open(host_pubkey_file) as fp:
         host_pubkey_pem = fp.read()
-
     host_pubkey = ecc.import_key(host_pubkey_pem)
 
-    # Get bytes
+    # Get Public Keys as Bytes
     host_pubkey_bytes = long_to_bytes(host_pubkey._point.x, ECC_PRIVSIZE) + long_to_bytes(host_pubkey._point.y, ECC_PRIVSIZE)
     car_pubkey_bytes = long_to_bytes(car_pubkey._point.x, ECC_PRIVSIZE) + long_to_bytes(car_pubkey._point.y, ECC_PRIVSIZE)
 
+    # Generate Entropy
+    entropy = get_random_bytes(0x400)
+
+    # Pack Car Data for EEPROM
     eeprom_data = host_pubkey_bytes + car_pubkey_bytes
     eeprom_path = args.secrets_dir / f"car_{args.car_id}_eeprom"
 
+    # Write EEPROM
     with open(eeprom_path, "wb") as fp:
         fp.write(eeprom_data)
 
@@ -73,6 +77,7 @@ def main():
     with open(args.header_file, "w") as fp:
         fp.write("#ifndef __CAR_SECRETS__\n")
         fp.write("#define __CAR_SECRETS__\n\n")
+        fp.write(f"ENTROPY S_ENTROPY = {{ {','.join(hex(b) for b in entropy)} }}")
         fp.write("#endif\n")
 
 
