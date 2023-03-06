@@ -133,7 +133,7 @@ void tryHostCmd(void) {
     if(cmd == P_PAIR_CMD) {
       // if fob is paired, pair another fob
       if(PFOB) {
-        pPairFob(&fob_state_ram);
+        pPairFob();
       }
     }
     if(cmd == U_PAIR_CMD) {
@@ -206,18 +206,29 @@ bool init_drbg(void)
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void pPairFob(FLASH_DATA *fob_state_ram)
+void pPairFob(void)
 {
+  PAIR_PACKET pair_packet;
+  uint32_t true_pin;
+  uint32_t host_pin;
+  
   // Paired fob only
-  PFOB || return;
+  if(!PFOB) return;
 
-  // TODO implement:
-  // get pin from HOST_UART
-  // if pin is invalid,
-  //    sleep(5) and return
-  // if pin is valid,
-  //    send PIN to UFOB_UART
-  //    send key to UFOB_UART
+  // Receive PIN attempt from host
+  uart_read(HOST_UART, &host_pin, sizeof(host_pin));
+
+  // Verify PIN attempt
+  if(!get_secret(NULL, &true_pin)) return;
+  if(host_pin != true_pin) {
+    // If pin is invalid, sleep and return
+    SLEEP();
+    return;
+  }
+  
+  // PIN Successful, Do Pairing
+  if(!get_secret(&pair_packet.car_privkey, &pair_packet.pin)) return;
+  uart_write(UFOB_UART, &pair_packet, sizeof(pair_packet));
 }
 
 /**
@@ -230,6 +241,7 @@ void uPairFob(FLASH_DATA *fob_state_ram)
   uint32_t PIN;
   sb_sw_private_t key;
   FOB_DATA data;
+  PAIR_PACKET
 
   // original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
@@ -252,9 +264,10 @@ void uPairFob(FLASH_DATA *fob_state_ram)
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
   PACKAGE package;
+  FLASH_DATA temp_flash;
   
   // Paired fob only
-  PFOB || return;
+  if(!PFOB) return;
 
   // Get the feature number from the host
   uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
@@ -268,6 +281,15 @@ void enableFeature(FLASH_DATA *fob_state_ram)
     memcpy(temp_flash.packages[feature_num], package, sizeof(PACKAGE));
     // TODO commit flash data, based on saveFobState
   }
+}
+
+/**
+ * @brief Sleeps for 5 seconds
+ *
+ */
+void SLEEP(void) {
+  // (16000000/3)*5
+  SysCtlDelay(26666665);
 }
 
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
@@ -305,7 +327,7 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   RESPONSE response;
 
   // Paired fob only
-  PFOB || return;
+  if(!PFOB) return;
 
   ZERO(response);
 
@@ -333,7 +355,7 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   sb_sw_private_t priv;
 
   // Only paired fobs respond to challenges
-  PFOB || return;
+  if(!PFOB) return;
 
   // Clear empy data
   ZERO(sb_ctx);

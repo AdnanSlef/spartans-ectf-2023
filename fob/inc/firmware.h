@@ -74,7 +74,7 @@ typedef struct {
 // Core functions
 void unlockCar(FLASH_DATA *fob_state_ram);
 void enableFeature(FLASH_DATA *fob_state_ram);
-void pPairFob(FLASH_DATA *fob_state_ram);
+void pPairFob(void);
 void uPairFob(FLASH_DATA *fob_state_ram);
 void startCar(FLASH_DATA *fob_state_ram);
 void gen_response(CHALLENGE *challenge, RESPONSE *response);
@@ -86,5 +86,6 @@ void prep_drbg(void);
 void saveFobState(FLASH_DATA *flash_data);
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
 bool init_drbg(void);
+void SLEEP(void);
 
 #endif
