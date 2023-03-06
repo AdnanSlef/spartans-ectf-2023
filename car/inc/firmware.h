@@ -1,7 +1,7 @@
 /**
  * @file firmware.h
  * @author Spartan State Security Team
- * @brief File that contains header information for the firmware of the car device
+ * @brief File that contains header information for the firmware of the Secure Car device
  * @date 2023
  */
 
@@ -33,9 +33,7 @@ typedef struct {
 
 typedef struct {
   sb_sw_signature_t unlock;
-  PACKAGE feature1;// TODO PACKAGE feature[3];
-  PACKAGE feature2;
-  PACKAGE feature3;
+  PACKAGE feature[3];
 } RESPONSE;
 
 typedef struct {
@@ -49,7 +47,7 @@ typedef struct {
 
 /*** Function definitions ***/
 // Core Functions
-void tryUnlock(void);
+bool tryUnlock(void);
 bool startCar(RESPONSE *response);
 bool unlockCar(void);
 

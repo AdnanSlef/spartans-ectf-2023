@@ -84,12 +84,14 @@ void SLEEP(void) {
 /**
  * @brief Function that handles unlocking of car
  */
-void tryUnlock(void) {
+bool tryUnlock(void) {
   CHALLENGE challenge;
   RESPONSE response;
 
   // Clear response
   ZERO(response);
+
+  return // Ensure the below code isn't optimized out
 
   // Make sure the fob is requesting an unlock
   fob_requests_unlock() &&
@@ -135,7 +137,7 @@ bool init_drbg(void)
 
   // Initialize DRBG
   if(sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY),
-                       &car_pubkey, sizeof(sb_sw_public_t), "Spartans", 8)
+                       (sb_byte_t *)&car_pubkey, sizeof(sb_sw_public_t), (sb_byte_t *)"Spartans", 8)
      != SB_SUCCESS)
      return false;
 
@@ -143,17 +145,17 @@ bool init_drbg(void)
   memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(ENTROPY));
 
   // Update Entropy
-  if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
+  if(sb_hmac_drbg_generate(&drbg, (sb_byte_t *)&temp_entropy, sizeof(temp_entropy)) != SB_SUCCESS) return false;
 
   // Commit Entropy
-  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram((uint32_t *)&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
   
   // Success
   return true;
 }
 
 bool gen_challenge(CHALLENGE *challenge) {
-  return sb_hmac_drbg_generate(&drbg, challenge, sizeof(CHALLENGE)) == SB_SUCCESS;
+  return sb_hmac_drbg_generate(&drbg, (sb_byte_t *)challenge, sizeof(CHALLENGE)) == SB_SUCCESS;
 }
 
 bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
@@ -172,20 +174,20 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
 
   // Verify the challenge-response response
   if(sb_sw_verify_signature_sha256(&sb_ctx, &hash, &response->unlock, &car_pubkey,
-                                   challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
+                                   (sb_byte_t *)challenge, sizeof(CHALLENGE), &drbg, SB_SW_CURVE_P256, ENDIAN)
      != SB_SUCCESS)
      return false;
   ZERO(sb_ctx);
   ZERO(hash);
 
   // Verify each of the feature signatures
-  for(i=1; i<=NUM_FEATURES; i++) {
-    package = ((PACKAGE *)response)[i];
+  for(i=0; i<NUM_FEATURES; i++) {
+    package = response->feature[i];
     if(memcmp(&package, &NON_PACKAGE, sizeof(PACKAGE))) {
       sb_sha256_init(&sha);
-      sb_sha256_update(&sha, &car_pubkey, sizeof(car_pubkey));
+      sb_sha256_update(&sha, (sb_byte_t *)&car_pubkey, sizeof(car_pubkey));
       sb_sha256_update(&sha, &i, sizeof(i));
-      sb_sha256_finish(&sha, &hash);
+      sb_sha256_finish(&sha, (sb_byte_t *)&hash);
       if(sb_sw_verify_signature(&sb_ctx, &package, &host_pubkey, &hash, &drbg, SB_SW_CURVE_P256, ENDIAN) != SB_SUCCESS) {
         return false;
       }
@@ -225,15 +227,15 @@ bool startCar(RESPONSE *response) {
   PACKAGE package;
 
   // Print out feature messages for all active features
-  for (i = 1; i <= NUM_FEATURES; i++) {
-    package = ((PACKAGE *)response)[i];
+  for (i = 0; i < NUM_FEATURES; i++) {
+    package = response->feature[i];
     if(memcmp(&package, &NON_PACKAGE, sizeof(PACKAGE))) {
       // Initialize EEPROM
       if(EEPROMInit() != EEPROM_INIT_OK){
         return false;
       }
       // Send feature message
-      EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - i * FEATURE_SIZE, FEATURE_SIZE);
+      EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - (i+1) * FEATURE_SIZE, FEATURE_SIZE);
       uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
     }
   }
