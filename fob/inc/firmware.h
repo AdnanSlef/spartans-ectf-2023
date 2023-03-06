@@ -31,8 +31,6 @@
 #define P_PAIR_CMD 0x20
 #define U_PAIR_CMD 0x30
 #define UNLOCK_REQ 0x56
-#define NO_UPAIRED 0xFFFFFFFF
-#define YES_PAIRED 0x20202020
 
 /*** FLASH Storage Information ***/
 #define FOB_STATE_PTR 0x3FC00
@@ -40,8 +38,8 @@
   (sizeof(FLASH_DATA) % 4 == 0) \
       ? sizeof(FLASH_DATA)      \
       : sizeof(FLASH_DATA) + (4 - (sizeof(FLASH_DATA) % 4))
-#define FLASH_PAIRED 0x00
-#define FLASH_UNPAIRED 0xFF
+#define NO_UPAIRED 0xFFFFFFFF
+#define YES_PAIRED 0x20202020
 #define FOB_FLASH ((FOB_DATA *)FOB_STATE_PTR)
 
 /*** Structure definitions ***/
