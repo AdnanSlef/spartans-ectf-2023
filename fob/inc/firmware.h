@@ -37,6 +37,7 @@
       : sizeof(FLASH_DATA) + (4 - (sizeof(FLASH_DATA) % 4))
 #define FLASH_PAIRED 0x00
 #define FLASH_UNPAIRED 0xFF
+#define FOB_FLASH ((FOB_DATA *)FOB_STATE_PTR)
 
 /*** Structure definitions ***/
 typedef sb_sw_signature_t PACKAGE;
@@ -45,6 +46,7 @@ typedef struct {
   uint8_t data[64];
 } CHALLENGE;
 
+// Defines a struct of the response for the challenge-response mechanism
 typedef struct {
   sb_sw_signature_t unlock;
   PACKAGE feature1;
@@ -59,37 +61,35 @@ typedef struct
   uint32_t pin;
 } PAIR_PACKET;
 
-// Defines a struct for storing the state in flash
+// Defines a struct for storing the fob data
 typedef struct
 {
   uint32_t paired;
   uint32_t pin;
   sb_sw_private_t car_priv;
-  PACKAGE feature1;
-  PACKAGE feature2;
-  PACKAGE feature3;
+  PACKAGE feature[3];
 } FOB_DATA;
 
+// Defines a struct for storing entropy in flash
 typedef struct {
   uint8_t data[0x400];
 } ENTROPY;
 
 /*** Function definitions ***/
 // Core functions
-void unlockCar(FLASH_DATA *fob_state_ram);
-void enableFeature(FLASH_DATA *fob_state_ram);
 void pPairFob(void);
 void uPairFob(void);
-void startCar(FLASH_DATA *fob_state_ram);
+void enableFeature(void);
+void unlockCar(void);
 void gen_response(CHALLENGE *challenge, RESPONSE *response);
 
 // Helper functions
 void tryHostCmd(void);
 void tryButton(void);
-void prep_drbg(void);
-void saveFobState(FLASH_DATA *flash_data);
-bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
 bool init_drbg(void);
 void SLEEP(void);
+bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
+void loadFobState(FOB_DATA *fob_data);
+bool saveFobState(FOB_DATA *fob_data);
 
 #endif

@@ -24,7 +24,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
 
-#include "sb_all.h" // TODO have to make this work in makefile
+#include "sb_all.h" //TODO have to make this work in makefile
 
 #include "secrets.h"
 
@@ -44,34 +44,18 @@ uint8_t current_sw_state = GPIO_PIN_4;
 sb_hmac_drbg_state_t drbg;
 
 /**
- * @brief Main function for the fob example
+ * @brief Main function for the Secure Fob design
  *
- * Listens over UART and SW1 for an unlock command. If unlock command presented,
- * attempts to unlock door. Listens over UART for pair command. If pair
- * command presented, attempts to either pair a new key, or be paired
- * based on firmware build.
+ * Listens to SW1 Button for an unlock command.
+ * If unlock command presented (button pressed), attempts to unlock and start car.
+ * Listens over Host UART for commands, including:
+ * Enable Feature, Pair Fob (Primary), Pair Fob (Replica)
  */
 int main(void)
 {
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
-
-  // If paired fob, initialize fob state in flash from EEPROM
-  #if PAIRED == 1
-
-  FOB_DATA fob_state;
-  loadFobState(&fob_state);
-
-  if (fob_state->paired == FLASH_UNPAIRED)
-  {
-    EEPROMRead(&fob_state, 0, sizeof(fob_state));
-    saveFobState(&fob_state_ram);
-  }
-
-  ZERO(fob_state);
-
-  #endif
 
   // Initialize DRBG
   if (!init_drbg()) {
@@ -111,7 +95,7 @@ void tryHostCmd(void) {
     if(cmd == ENABLE_CMD) {
       // if fob is paired, enable feature
       if(PFOB) {
-        enableFeature(&fob_state_ram);
+        enableFeature();
       }
     }
     if(cmd == P_PAIR_CMD) {
@@ -123,7 +107,7 @@ void tryHostCmd(void) {
     if(cmd == U_PAIR_CMD) {
       // if fob is unpaired, pair fob
       if(UFOB && OG_UFOB) {
-        uPairFob(&fob_state_ram);
+        uPairFob();
       }
     }
 
@@ -131,25 +115,21 @@ void tryHostCmd(void) {
 }
 
 void tryButton(void) {
-
+  // Check for Button Press
   current_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
-
   if ((current_sw_state != previous_sw_state) && (current_sw_state == 0)) {
-    // Debounce switch
+    // Debounce Switch
     SysCtlDelay(20000);
     debounce_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
-
     if (debounce_sw_state == current_sw_state) {
-      // switch pressed, unlock car if paired
+      // Switch Pressed, Unlock Car if Paired
       if(PFOB) {
-        unlockCar(&fob_state_ram);
+        unlockCar();
       }
     }
-
   }
   previous_sw_state = current_sw_state;
 }
-
 
 bool init_drbg(void)
 {
@@ -183,6 +163,39 @@ bool init_drbg(void)
   
   // Success
   return true;
+}
+
+/**
+ * @brief Sleeps for 5 seconds
+ *
+ */
+void SLEEP(void) {
+  // (16000000/3)*5
+  SysCtlDelay(26666665);
+}
+
+bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
+  #if OG_PFOB == 1
+    if(EEPROMInit() != EEPROM_INIT_OK){
+      return false;
+    }
+    if(priv) {
+      EEPROMRead(priv, offsetof(FOB_DATA, car_privkey), sizeof(sb_sw_private_t));
+    }
+    if(pin) {
+      EEPROMRead(pin, offsetof(FOB_DATA, pin), sizeof(uint32_t));
+    }
+    return true;
+  #endif
+  #if OG_UFOB == 1
+    if(priv) {
+      memcpy(priv, FLASH_DATA.car_privkey, sizeof(sb_sw_private_t));
+    }
+    if(pin) {
+      *pin = FOB_DATA_FLASH.pin;
+    }
+    return true;
+  #endif
 }
 
 /**
@@ -237,7 +250,7 @@ void uPairFob(void)
   loadFobState(&temp_flash);
   temp_flash.pin = pair_packet.pin;
   memcpy(&temp_flash.car_privkey, &pair_packet.car_privkey, sizeof(temp_flash.car_privkey));
-  temp_flash.paired = YES_PAIRED; // todo make sure this works to make PFOB true, UFOB false
+  temp_flash.paired = YES_PAIRED;
   saveFobState(&temp_flash);
 }
 
@@ -246,7 +259,7 @@ void uPairFob(void)
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void enableFeature(FLASH_DATA *fob_state_ram)
+void enableFeature(void)
 {
   PACKAGE package;
   FOB_DATA temp_flash;
@@ -263,53 +276,21 @@ void enableFeature(FLASH_DATA *fob_state_ram)
   // Store the feature package
   if(feature_num < NUM_FEATURES) {
     loadFobState(&temp_flash);
-    memcpy(temp_flash.packages[feature_num], package, sizeof(PACKAGE));
+    memcpy(&temp_flash.feature[feature_num], &package, sizeof(PACKAGE));
     saveFobState(&temp_flash);
   }
 }
 
 /**
- * @brief Sleeps for 5 seconds
- *
+ * @brief Request the Secure Car device to unlock and start
+ * 
+ * Responds to the car's challenge, and sends the packaged features.
  */
-void SLEEP(void) {
-  // (16000000/3)*5
-  SysCtlDelay(26666665);
-}
-
-bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
-  #if OG_PFOB == 1
-    if(EEPROMInit() != EEPROM_INIT_OK){
-      return false;
-    }
-    if(priv) {
-      EEPROMRead(priv, offsetof(FOB_DATA, car_privkey), sizeof(sb_sw_private_t));
-    }
-    if(pin) {
-      EEPROMRead(pin, offsetof(FOB_DATA, pin), sizeof(uint32_t));
-    }
-    return true;
-  #endif
-  #if OG_UFOB == 1
-    if(priv) {
-      memcpy(priv, FLASH_DATA.car_privkey, sizeof(sb_sw_private_t));
-    }
-    if(pin) {
-      *pin = FOB_DATA_FLASH.pin;
-    }
-    return true;
-  #endif
-}
-
-/**
- * @brief Function that handles the fob unlocking a car
- *
- * @param fob_state_ram pointer to the current fob state in ram
- */
-void unlockCar(FLASH_DATA *fob_state_ram)
+void unlockCar(void)
 {
   CHALLENGE challenge;
   RESPONSE response;
+  FOB_DATA temp_flash;
 
   // Paired fob only
   if(!PFOB) return;
@@ -326,13 +307,18 @@ void unlockCar(FLASH_DATA *fob_state_ram)
   gen_response(&challenge, &response);
   
   // Prepare Feature Requests
-  memcpy(&response.feature1, self_flash.packages, sizeof(response.feature1)*3);
+  memcpy(&response.feature, FOB_FLASH.feature, sizeof(response.feature));
 
   // Send Response with Features
   finalize_unlock(&response);
 }
 
-
+/**
+ * @brief Generate a response to the car's challenge
+ * 
+ * @param challenge [in]  The car's challenge to which we must respond
+ * @param response  [out] The response being written
+ */
 void gen_response(CHALLENGE *challenge, RESPONSE *response)
 {
   sb_sw_context_t sb_ctx;
@@ -341,7 +327,7 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
 
   // Only paired fobs respond to challenges
   if(!PFOB) return;
-UFOB
+
   // Clear empy data
   ZERO(sb_ctx);
 
@@ -355,25 +341,15 @@ UFOB
   ZERO(priv);
 }
 
-/**
- * @brief Function that loads fob data into ram from flash
- *
- * @param fob_data Pointer to the fob data ram
- */
-void loadFobState(FOB_DATE * fob_data) {
-  memcpy(fob_data, FOB_STATE_PTR, sizeof(FOB_DATA));
+void loadFobState(FOB_DATA *fob_data)
+{
+  memcpy(fob_data, FOB_FLASH, sizeof(FOB_DATA));
 }
 
-/**
- * @brief Function that erases and rewrites the non-volatile data to flash
- *
- * @param fob_data Pointer to the fob data ram
- */
-bool saveFobState(FOB_DATA * fob_data) {
-  // if either gives non-zero return value, i.e. an error, then return false
-  return (
-      FlashErase(FOB_STATE_PTR)
-      ||
-      FlashProgram((uint32_t *)fob_data, FOB_STATE_PTR, sizeof(FOB_DATA))
-  );
+bool saveFobState(FOB_DATA *fob_data)
+{
+  return
+  !FlashErase(FOB_STATE_PTR)
+  &&
+  !FlashProgram((uint32_t *)fob_data, FOB_STATE_PTR, sizeof(FOB_DATA));
 }
