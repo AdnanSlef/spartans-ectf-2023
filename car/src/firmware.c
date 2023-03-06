@@ -221,7 +221,7 @@ bool unlockCar(void) {
   EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, UNLOCK_EEPROM_SIZE);
 
   // Display Unlock Success Message
-  uart_write(HOST_UART, eeprom_message, UNLOCK_EEPROM_SIZE);
+  uart_write(HOST_UART, &eeprom_message, UNLOCK_EEPROM_SIZE);
 
   // Clear eeprom message
   ZERO(eeprom_message);

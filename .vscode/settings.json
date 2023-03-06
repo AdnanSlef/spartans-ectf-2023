@@ -2,5 +2,6 @@
     "files.associations": {
         "gpio.h": "c",
         "sb_sha256.h": "c"
-    }
+    },
+    "cortex-debug.variableUseNaturalFormat": false
 }
