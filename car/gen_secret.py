@@ -73,9 +73,6 @@ def main():
     with open(args.header_file, "w") as fp:
         fp.write("#ifndef __CAR_SECRETS__\n")
         fp.write("#define __CAR_SECRETS__\n\n")
-        # fp.write(f"#define CAR_SECRET {123}\n\n") # placeholder
-        fp.write(f'#define CAR_ID "{args.car_id}"\n\n')
-        fp.write('#define PASSWORD "unlock"\n\n')
         fp.write("#endif\n")
 
 

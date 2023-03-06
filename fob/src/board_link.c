@@ -108,9 +108,8 @@ void request_unlock(void) {
   uart_writeb(CAR_UART, UNLOCK_REQ);
 }
 
-void get_challenge(CHALLENGE *challenge) {\
-  // TODO read sizeof(CHALLENGE) bytes into challenge from CAR_UART
-  ((uint8_t *)challenge)[i]
+void get_challenge(CHALLENGE *challenge) {
+  uart_read(CAR_UART, challenge, sizeof(CHALLENGE));
 }
 
 void finalize_unlock(RESPONSE *response) {
