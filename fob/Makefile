@@ -40,7 +40,7 @@ include ${TIVA_ROOT}/makedefs
 CFLAGS+=-Os
 
 # Defenses
-CFLAGS+=-fstack-protector-all
+# CFLAGS+=-fstack-protector-all
 
 # check that parameters are defined
 check_defined = \
@@ -66,12 +66,6 @@ unpaired_fob_gen_secret:
 
 ################ END fob customization ################
 #######################################################
-
-
-# this rule must come first in `paired_fob`
-paired_fob: ${COMPILER}
-paired_fob: paired_fob_arg_check
-paired_fob: paired_fob_gen_secret
 
 ################ start sweet-b inclusion ################
 DO_MAKE_SWEET_B=yes
@@ -113,6 +107,27 @@ paired_fob: ${COMPILER}/sb_sw_lib.o
 endif
 ################# end sweet-b inclusion #################
 
+
+# this rule must come first in `paired_fob`
+paired_fob: ${COMPILER}
+paired_fob: paired_fob_arg_check
+paired_fob: paired_fob_gen_secret
+
+################ start sweet-b inclusion ################
+DO_MAKE_SWEET_B=yes
+ifdef DO_MAKE_SWEET_B
+
+# add rules to build sweet-b components
+paired_fob: ${COMPILER}/sb_sha256.o
+paired_fob: ${COMPILER}/sb_fe.o
+paired_fob: ${COMPILER}/sb_hmac_sha256.o
+paired_fob: ${COMPILER}/sb_hmac_drbg.o
+paired_fob: ${COMPILER}/sb_hkdf.o
+paired_fob: ${COMPILER}/sb_sw_lib.o
+
+endif
+################# end sweet-b inclusion #################
+
 # this must be the last build rule of `paired_fob`
 paired_fob: ${COMPILER}/firmware.axf
 paired_fob: copy_artifacts
@@ -126,31 +141,6 @@ unpaired_fob: unpaired_fob_gen_secret
 ################ start sweet-b inclusion ################
 DO_MAKE_SWEET_B=yes
 ifdef DO_MAKE_SWEET_B
-
-# path to sweet-b library
-SBPATH=${ROOT}/lib/sweet-b
-
-# add path to sweet-b source files to source path
-VPATH+=${SBPATH}/src
-VPATH+=${SBPATH}/include
-
-# add sweet-b library to includes path
-IPATH+=${SBPATH}/include
-IPATH+=${SBPATH}/src
-
-# add compiler flag to allow sweet-b to work on Cortex-M4
-CFLAGS+=-DSB_WORD_SIZE=2
-
-# disable the unused curve
-CFLAGS+=-DSB_SW_SECP256K1_SUPPORT=0
-
-# add sweet-b object files to includes path
-LDFLAGS+=${COMPILER}/sb_sha256.o
-LDFLAGS+=${COMPILER}/sb_fe.o
-LDFLAGS+=${COMPILER}/sb_hmac_sha256.o
-LDFLAGS+=${COMPILER}/sb_hmac_drbg.o
-LDFLAGS+=${COMPILER}/sb_hkdf.o
-LDFLAGS+=${COMPILER}/sb_sw_lib.o
 
 # add rules to build sweet-b components
 unpaired_fob: ${COMPILER}/sb_sha256.o

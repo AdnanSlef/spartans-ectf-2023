@@ -10,10 +10,15 @@
 
 #include "sb_all.h"
 
-/*** Features Information ***/
+/*** Macro Definitions ***/
+// Features Information
 #define NUM_FEATURES 3
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
+
+// Paired or Unpaired
+#define PFOB pfob()
+#define UFOB !pfob()
 
 // Endianness
 #define ENDIAN 1
@@ -49,9 +54,7 @@ typedef struct {
 // Defines a struct of the response for the challenge-response mechanism
 typedef struct {
   sb_sw_signature_t unlock;
-  PACKAGE feature1;
-  PACKAGE feature2;
-  PACKAGE feature3;
+  PACKAGE feature[3];
 } RESPONSE;
 
 // Defines a struct for the format of a pairing message
@@ -88,6 +91,7 @@ void tryHostCmd(void);
 void tryButton(void);
 bool init_drbg(void);
 void SLEEP(void);
+bool pfob(void);
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
 void loadFobState(FOB_DATA *fob_data);
 bool saveFobState(FOB_DATA *fob_data);

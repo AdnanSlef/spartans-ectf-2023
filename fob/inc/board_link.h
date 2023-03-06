@@ -71,4 +71,8 @@ uint32_t receive_board_message(MESSAGE_PACKET *message);
  */
 uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type);
 
+void request_unlock(void);
+void get_challenge(CHALLENGE *challenge);
+void finalize_unlock(RESPONSE *response);
+
 #endif
