@@ -246,8 +246,8 @@ bool startCar(RESPONSE *response) {
         return false;
       }
       // Send feature message
-      EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - (i+1) * FEATURE_SIZE, FEATURE_SIZE);
-      uart_write(HOST_UART, eeprom_message, FEATURE_SIZE);
+      EEPROMRead((uint32_t *)&eeprom_message, FEATURE_END - (i+1) * FEATURE_SIZE, FEATURE_SIZE);
+      uart_write(HOST_UART, &eeprom_message, FEATURE_SIZE);
     }
   }
   return true;
