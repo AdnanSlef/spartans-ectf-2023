@@ -25,27 +25,27 @@ def enable(fob_bridge, package_name):
     fob_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     fob_sock.connect(("ectf-net", int(fob_bridge)))
 
-    # Send enable command to fob
-    fob_sock.send(b"\x10")
-
     # Open and read binary data from package file
     with open(f"/package_dir/{package_name}", "rb") as fhandle:
         message = fhandle.read()
 
+    # Send enable command to fob
+    fob_sock.send(b"\x10")
+
     # Send package to fob
     fob_sock.send(message)
 
-    # Set timeout for if enable fails
-    fob_sock.settimeout(5)
-    # Try to receive data - if failed, enabling failed
-    try:
-        enable_success = fob_sock.recv(7)
-        while len(enable_success) != 7:
-            enable_success += fob_sock.recv(7 - len(enable_success))
+    # # Set timeout for if enable fails
+    # fob_sock.settimeout(5)
+    # # Try to receive data - if failed, enabling failed
+    # try:
+    #     enable_success = fob_sock.recv(7)
+    #     while len(enable_success) != 7:
+    #         enable_success += fob_sock.recv(7 - len(enable_success))
 
-        print(enable_success)
-    except socket.timeout:
-        sys.exit("Failed to enable feature")
+    #     print(enable_success)
+    # except socket.timeout:
+    #     sys.exit("Failed to enable feature")
 
     return 0
 
