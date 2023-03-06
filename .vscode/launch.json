@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
       {
-          "name": "Cortex Debug",
+          "name": "Cortex Debug Car",
           "cwd": "${workspaceFolder}",
           "executable": "${workspaceRoot}/../tools/2023-ectf-tools/testcarout/testcar1.elf",
           "armToolchainPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/12.2 rel1/bin",

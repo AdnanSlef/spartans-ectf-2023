@@ -54,7 +54,7 @@ paired_fob_arg_check:
 	$(call check_defined, CAR_ID PAIR_PIN SECRETS_DIR BIN_PATH ELF_PATH EEPROM_PATH)
 
 paired_fob_gen_secret:
-	python3 gen_secret.py --car-id ${CAR_ID} --pair-pin ${PAIR_PIN} --secret-file ${SECRETS_DIR}/car_secrets.json --header-file inc/secrets.h --paired
+	python3 gen_secret.py --car-id ${CAR_ID} --pair-pin ${PAIR_PIN} --secrets-dir ${SECRETS_DIR} --header-file inc/secrets.h --paired
 
 
 unpaired_fob_arg_check:

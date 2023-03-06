@@ -21,21 +21,23 @@ from Crypto.Util.number import long_to_bytes
 
 ECC_PRIVSIZE = 32
 ECC_SIGNATURE_SIZE = 64
+YES_PAIRED = 0x20202020
+NO_UPAIRED = 0xFFFFFFFF
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--car-id", type=int)
     parser.add_argument("--pair-pin", type=str)
-    parser.add_argument("--secret-file", type=Path)
+    parser.add_argument("--secrets-dir", type=Path)
     parser.add_argument("--header-file", type=Path)
     parser.add_argument("--paired", action="store_true")
     args = parser.parse_args()
 
-    paired = 0x20202020 if args.paired else 0xFFFFFFFF
-    pin = args.pair_pin
+    paired = YES_PAIRED if args.paired else NO_UPAIRED
+    pin = int(args.pair_pin,16)
 
     # Open the secret file if it exists
-    secret_file = Path(args.secret_file)
+    secret_file = args.secrets_dir / "car_secrets.json"
     if secret_file.exists():
         with open(secret_file, "r") as fp:
             secrets = json.load(fp)
