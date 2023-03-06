@@ -77,7 +77,8 @@ def main():
     with open(args.header_file, "w") as fp:
         fp.write("#ifndef __CAR_SECRETS__\n")
         fp.write("#define __CAR_SECRETS__\n\n")
-        fp.write(f"ENTROPY S_ENTROPY = {{ {','.join(hex(b) for b in entropy)} }}")
+        fp.write('#include "firmware.h"\n')
+        fp.write(f"const uint8_t S_ENTROPY[sizeof(ENTROPY)] = {{ {','.join(hex(b) for b in entropy)} }};\n")
         fp.write("#endif\n")
 
 
