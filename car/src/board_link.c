@@ -57,46 +57,6 @@ void setup_board_link(void) {
 }
 
 /**
- * @brief Send a message between boards
- *
- * @param message pointer to message to send
- * @return uint32_t the number of bytes sent
- */
-uint32_t send_board_message(MESSAGE_PACKET *message) {//TODO delete, just a model for send
-  UARTCharPut(FOB_UART, message->magic);
-  UARTCharPut(FOB_UART, message->message_len);
-
-  for (int i = 0; i < message->message_len; i++) {
-    UARTCharPut(FOB_UART, message->buffer[i]);
-  }
-
-  return message->message_len;
-}
-
-/**
- * @brief Receive a message between boards
- *
- * @param message pointer to message where data will be received
- * @return uint32_t the number of bytes received - 0 for error
- */
-uint32_t receive_board_message(MESSAGE_PACKET *message) { //TODO delete or adapt, just a model for receive
-  message->magic = (uint8_t)UARTCharGet(FOB_UART);
-
-  if (message->magic == 0) {
-    return 0;
-  }
-
-  message->message_len = (uint8_t)UARTCharGet(FOB_UART);
-
-  for (int i = 0; i < message->message_len; i++) {
-    message->buffer[i] = (uint8_t)UARTCharGet(FOB_UART);
-  }
-
-  return message->message_len;
-}
-
-
-/**
  * @brief Function that determines whether the fob is requesting an unlock
  *
  * @return bool true if fob is requesting unlock, false otherwise
@@ -106,10 +66,10 @@ bool fob_requests_unlock(void) {
 }
 
 /**
- * @brief TODO implement
+ * @brief Send a challenge-respones challenge to the secure fob device
 */
 bool send_challenge(CHALLENGE *challenge) {
-  return false;
+  uart_write(FOB_UART, challenge, sizeof(CHALLENGE));
 }
 
 /**
