@@ -35,8 +35,8 @@ def pair(unpaired_fob_bridge, paired_fob_bridge, pair_pin):
     paired_sock.settimeout(2)
 
     # Send pair commands to both fobs
-    unpaired_sock.send(b"pair\n")
-    paired_sock.send(b"pair\n")
+    unpaired_sock.send(b"\x30")
+    paired_sock.send(b"\x20")
 
     # Receive ack from the paired fob
     try:

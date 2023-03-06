@@ -26,7 +26,7 @@ def enable(fob_bridge, package_name):
     fob_sock.connect(("ectf-net", int(fob_bridge)))
 
     # Send enable command to fob
-    fob_sock.send(b"enable\n")
+    fob_sock.send(b"\x10")
 
     # Open and read binary data from package file
     with open(f"/package_dir/{package_name}", "rb") as fhandle:
