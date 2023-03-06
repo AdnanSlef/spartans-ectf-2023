@@ -194,10 +194,10 @@ bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
   #endif
   #if OG_UFOB == 1
     if(priv) {
-      memcpy(priv, FLASH_DATA.car_privkey, sizeof(sb_sw_private_t));
+      memcpy(priv, &FOB_FLASH->car_privkey, sizeof(sb_sw_private_t));
     }
     if(pin) {
-      *pin = FOB_DATA_FLASH.pin;
+      *pin = FOB_FLASH->pin;
     }
     return true;
   #endif
