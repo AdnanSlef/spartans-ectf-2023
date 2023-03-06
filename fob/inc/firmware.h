@@ -23,7 +23,9 @@
 #define ENABLE_CMD 0x10
 #define P_PAIR_CMD 0x20
 #define U_PAIR_CMD 0x30
-#define UNLOCK_REQ  0x56
+#define UNLOCK_REQ 0x56
+#define NO_UPAIRED 0xFFFFFFFF
+#define YES_PAIRED 0x20202020
 
 /*** FLASH Storage Information ***/
 #define FOB_STATE_PTR 0x3FC00
@@ -75,7 +77,7 @@ typedef struct {
 void unlockCar(FLASH_DATA *fob_state_ram);
 void enableFeature(FLASH_DATA *fob_state_ram);
 void pPairFob(void);
-void uPairFob(FLASH_DATA *fob_state_ram);
+void uPairFob(void);
 void startCar(FLASH_DATA *fob_state_ram);
 void gen_response(CHALLENGE *challenge, RESPONSE *response);
 
