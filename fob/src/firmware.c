@@ -174,6 +174,11 @@ void SLEEP(void) {
   SysCtlDelay(26666665);
 }
 
+bool pfob(void)
+{
+  return OG_PFOB || FOB_FLASH->paired==YES_PAIRED;
+}
+
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
   #if OG_PFOB == 1
     if(EEPROMInit() != EEPROM_INIT_OK){

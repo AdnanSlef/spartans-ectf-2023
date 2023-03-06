@@ -10,10 +10,15 @@
 
 #include "sb_all.h"
 
-/*** Features Information ***/
+/*** Macro Definitions ***/
+// Features Information
 #define NUM_FEATURES 3
 #define FEATURE_END 0x7C0
 #define FEATURE_SIZE 64
+
+// Paired or Unpaired
+#define PFOB pfob()
+#define UFOB !pfob()
 
 // Endianness
 #define ENDIAN 1
@@ -88,6 +93,7 @@ void tryHostCmd(void);
 void tryButton(void);
 bool init_drbg(void);
 void SLEEP(void);
+bool pfob(void);
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin);
 void loadFobState(FOB_DATA *fob_data);
 bool saveFobState(FOB_DATA *fob_data);
