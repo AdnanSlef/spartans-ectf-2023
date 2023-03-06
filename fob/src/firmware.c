@@ -24,7 +24,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
 
-// #include "sb_all.h" TODO have to make this work in makefile
+#include "sb_all.h" // TODO have to make this work in makefile
 
 #include "secrets.h"
 
@@ -43,7 +43,6 @@ uint8_t current_sw_state = GPIO_PIN_4;
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
 
-
 /**
  * @brief Main function for the fob example
  *
@@ -54,40 +53,25 @@ sb_hmac_drbg_state_t drbg;
  */
 int main(void)
 {
-  FLASH_DATA fob_state_ram;
-  FLASH_DATA *fob_state_flash = (FLASH_DATA *)FOB_STATE_PTR;
-
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
 
-// If paired fob, initialize the system information; TODO clean up main function removing unnecessary and replacing with what we need
-#if PAIRED == 1
-  if (fob_state_flash->paired == FLASH_UNPAIRED)
-  {
-    strcpy((char *)(fob_state_ram.pair_info.password), PASSWORD);
-    strcpy((char *)(fob_state_ram.pair_info.pin), PAIR_PIN);
-    strcpy((char *)(fob_state_ram.pair_info.car_id), CAR_ID);
-    strcpy((char *)(fob_state_ram.feature_info.car_id), CAR_ID);
-    fob_state_ram.paired = FLASH_PAIRED;
+  // If paired fob, initialize fob state in flash from EEPROM
+  #if PAIRED == 1
 
+  FOB_DATA fob_state;
+  loadFobState(&fob_state);
+
+  if (fob_state->paired == FLASH_UNPAIRED)
+  {
+    EEPROMRead(&fob_state, 0, sizeof(fob_state));
     saveFobState(&fob_state_ram);
   }
-#else
-  fob_state_ram.paired = FLASH_UNPAIRED;
-#endif
 
-  if (fob_state_flash->paired == FLASH_PAIRED)
-  {
-    memcpy(&fob_state_ram, fob_state_flash, FLASH_DATA_SIZE);
-  }
+  ZERO(fob_state);
 
-  // This will run on first boot to initialize features, TODO remove except on first boot need to pull eeprom to flash
-  if (fob_state_ram.feature_info.num_active == 0xFF)
-  {
-    fob_state_ram.feature_info.num_active = 0;
-    saveFobState(&fob_state_ram);
-  }
+  #endif
 
   // Initialize DRBG
   if (!init_drbg()) {
@@ -236,24 +220,25 @@ void pPairFob(void)
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void uPairFob(FLASH_DATA *fob_state_ram)
+void uPairFob(void)
 {
-  uint32_t PIN;
-  sb_sw_private_t key;
-  FOB_DATA data;
-  PAIR_PACKET
+  FOB_DATA temp_flash;
+  PAIR_PACKET pair_packet;
 
-  // original unpaired fob only
+  // Original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
     return;
   }
 
-  // TODO expand on pseudocode, then implement
-  // get_PIN(&PIN, PFOB_UART)
-  // get_key(&key, PFOB_UART)
-  // set_PIN(PIN)
-  // set_key(key)
-  // PFOB true, UFOB false
+  // Get pairing packet from paired fob
+  uart_read(PFOB_UART, &pair_packet, sizeof(pair_packet));
+
+  // Save the newly received values
+  loadFobState(&temp_flash);
+  temp_flash.pin = pair_packet.pin;
+  memcpy(&temp_flash.car_privkey, &pair_packet.car_privkey, sizeof(temp_flash.car_privkey));
+  temp_flash.paired = YES_PAIRED; // todo make sure this works to make PFOB true, UFOB false
+  saveFobState(&temp_flash);
 }
 
 /**
@@ -264,7 +249,7 @@ void uPairFob(FLASH_DATA *fob_state_ram)
 void enableFeature(FLASH_DATA *fob_state_ram)
 {
   PACKAGE package;
-  FLASH_DATA temp_flash;
+  FOB_DATA temp_flash;
   
   // Paired fob only
   if(!PFOB) return;
@@ -277,9 +262,9 @@ void enableFeature(FLASH_DATA *fob_state_ram)
 
   // Store the feature package
   if(feature_num < NUM_FEATURES) {
-    // TODO checkout flash data
+    loadFobState(&temp_flash);
     memcpy(temp_flash.packages[feature_num], package, sizeof(PACKAGE));
-    // TODO commit flash data, based on saveFobState
+    saveFobState(&temp_flash);
   }
 }
 
@@ -356,12 +341,9 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
 
   // Only paired fobs respond to challenges
   if(!PFOB) return;
-
+UFOB
   // Clear empy data
   ZERO(sb_ctx);
-
-  // Prepare DRBG
-  prep_drbg();
 
   // Get signing key
   if(!get_secret(priv, NULL))return;
@@ -374,12 +356,24 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
 }
 
 /**
+ * @brief Function that loads fob data into ram from flash
+ *
+ * @param fob_data Pointer to the fob data ram
+ */
+void loadFobState(FOB_DATE * fob_data) {
+  memcpy(fob_data, FOB_STATE_PTR, sizeof(FOB_DATA));
+}
+
+/**
  * @brief Function that erases and rewrites the non-volatile data to flash
  *
- * @param info Pointer to the flash data ram
+ * @param fob_data Pointer to the fob data ram
  */
-void saveFobState(FLASH_DATA *flash_data)
-{
-  FlashErase(FOB_STATE_PTR);
-  FlashProgram((uint32_t *)flash_data, FOB_STATE_PTR, FLASH_DATA_SIZE);
+bool saveFobState(FOB_DATA * fob_data) {
+  // if either gives non-zero return value, i.e. an error, then return false
+  return (
+      FlashErase(FOB_STATE_PTR)
+      ||
+      FlashProgram((uint32_t *)fob_data, FOB_STATE_PTR, sizeof(FOB_DATA))
+  );
 }
