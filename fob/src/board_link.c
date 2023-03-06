@@ -50,60 +50,6 @@ void setup_board_link(void) {
   }
 }
 
-/**
- * @brief Send a message between boards
- *
- * @param message pointer to message to send
- * @return uint32_t the number of bytes sent
- */
-uint32_t send_board_message(MESSAGE_PACKET *message) {
-  UARTCharPut(BOARD_UART, message->magic);
-  UARTCharPut(BOARD_UART, message->message_len);
-
-  for (int i = 0; i < message->message_len; i++) {
-    UARTCharPut(BOARD_UART, message->buffer[i]);
-  }
-
-  return message->message_len;
-}
-
-/**
- * @brief Receive a message between boards
- *
- * @param message pointer to message where data will be received
- * @return uint32_t the number of bytes received - 0 for error
- */
-uint32_t receive_board_message(MESSAGE_PACKET *message) {
-  message->magic = (uint8_t)UARTCharGet(BOARD_UART);
-
-  if (message->magic == 0) {
-    return 0;
-  }
-
-  message->message_len = (uint8_t)UARTCharGet(BOARD_UART);
-
-  for (int i = 0; i < message->message_len; i++) {
-    message->buffer[i] = (uint8_t)UARTCharGet(BOARD_UART);
-  }
-
-  return message->message_len;
-}
-
-/**
- * @brief Function that retreives messages until the specified message is found
- *
- * @param message pointer to message where data will be received
- * @param type the type of message to receive
- * @return uint32_t the number of bytes received
- */
-uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type) {
-  do {
-    receive_board_message(message);
-  } while (message->magic != type);
-
-  return message->message_len;
-}
-
 void request_unlock(void) {
   uart_writeb(CAR_UART, UNLOCK_REQ);
 }

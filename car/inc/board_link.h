@@ -21,25 +21,8 @@
 #include "firmware.h"
 #include "uart.h"
 
-#define ACK_SUCCESS 1
-#define ACK_FAIL 0
-
-#define ACK_MAGIC 0x54
-#define PAIR_MAGIC 0x55
 #define UNLOCK_MAGIC 0x56
-#define START_MAGIC 0x57
 #define FOB_UART ((uint32_t)UART1_BASE)
-
-/**
- * @brief Structure for message between boards
- *
- */
-typedef struct
-{
-  uint8_t magic;
-  uint8_t message_len;
-  uint8_t *buffer;
-} MESSAGE_PACKET;
 
 /**
  * @brief Set the up board link object
@@ -47,32 +30,6 @@ typedef struct
  * UART 1 is used to communicate between boards
  */
 void setup_board_link(void);
-
-/**
- * @brief Send a message between boards
- *
- * @param message pointer to message to send
- * @return uint32_t the number of bytes sent
- */
-uint32_t send_board_message(MESSAGE_PACKET *message);
-
-/**
- * @brief Receive a message between boards
- *
- * @param message pointer to message where data will be received
- * @return uint32_t the number of bytes received
- */
-uint32_t receive_board_message(MESSAGE_PACKET *message);
-
-/**
- * @brief Function that retreives messages until the specified message is found
- *
- * @param message pointer to message where data will be received
- * @param type the type of message to receive
- * @return uint32_t the number of bytes received
- */
-uint32_t receive_board_message_by_type(MESSAGE_PACKET *message, uint8_t type);
-
 
 bool send_challenge(CHALLENGE *challenge);
 bool fob_requests_unlock(void);
