@@ -8,6 +8,8 @@
 #ifndef CAR_FIRMWARE_H
 #define CAR_FIRMWARE_H
 
+#include "sb_all.h"
+
 /*** Macro Definitions ***/
 // Definitions for unlock message location in EEPROM
 #define UNLOCK_EEPROM_LOC 0x7C0
