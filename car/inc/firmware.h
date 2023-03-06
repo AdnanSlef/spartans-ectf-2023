@@ -37,8 +37,8 @@ typedef struct {
 } RESPONSE;
 
 typedef struct {
-  sb_sw_public_t car_pubkey;
   sb_sw_public_t host_pubkey;
+  sb_sw_public_t car_pubkey;
 } CAR_DATA;
 
 typedef struct {

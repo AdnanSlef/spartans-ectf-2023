@@ -24,7 +24,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
 
-#include "sb_all.h" //TODO have to make this work in makefile
+#include "sb_all.h"
 
 #include "secrets.h"
 
@@ -56,6 +56,17 @@ int main(void)
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
+
+  // Establish Entropy if Needed
+  if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
+     ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
+     ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4]) {
+
+    if( FlashErase(ENTROPY_FLASH)
+     || FlashProgram((uint32_t *)&S_ENTROPY, ENTROPY_FLASH, sizeof(ENTROPY))
+    ) return -1;
+    
+  }
 
   // Initialize DRBG
   if (!init_drbg()) {
