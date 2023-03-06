@@ -53,11 +53,11 @@ def main():
     package_data = b"\xFF" * ECC_SIGNATURE_SIZE * 3
 
     eeprom_data = struct.pack(
-        f"ii{'i' * ECC_PRIVSIZE}{'i' * ECC_SIGNATURE_SIZE * 3}",
+        f"<II{ECC_PRIVSIZE}s{ECC_SIGNATURE_SIZE*3}s",
         paired,
         pin,
-        *car_privkey_bytes,
-        *package_data
+        car_privkey_bytes,
+        package_data
     )
 
     eeprom_path = args.secrets_dir / f"pfob_{args.car_id}_eeprom"
