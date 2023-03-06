@@ -57,7 +57,7 @@ typedef struct {
 // Defines a struct for the format of a pairing message
 typedef struct
 {
-  sb_sw_private_t car_priv;
+  sb_sw_private_t car_privkey;
   uint32_t pin;
 } PAIR_PACKET;
 
@@ -66,7 +66,7 @@ typedef struct
 {
   uint32_t paired;
   uint32_t pin;
-  sb_sw_private_t car_priv;
+  sb_sw_private_t car_privkey;
   PACKAGE feature[3];
 } FOB_DATA;
 

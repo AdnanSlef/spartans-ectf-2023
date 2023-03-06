@@ -152,7 +152,7 @@ bool init_drbg(void)
   ZERO(car_privkey);
 
   //Checkout Entropy
-  memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(ENTROPY));
+  memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(temp_entropy));
 
   // Update Entropy
   if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy))
@@ -307,7 +307,7 @@ void unlockCar(void)
   gen_response(&challenge, &response);
   
   // Prepare Feature Requests
-  memcpy(&response.feature, FOB_FLASH.feature, sizeof(response.feature));
+  memcpy(&response.feature1, FOB_FLASH->feature, sizeof(FOB_DATA.feature));//todo update RESPONSE to use feature
 
   // Send Response with Features
   finalize_unlock(&response);
@@ -332,10 +332,10 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   ZERO(sb_ctx);
 
   // Get signing key
-  if(!get_secret(priv, NULL))return;
+  if(!get_secret(&priv, NULL))return;
   
   // Generate response
-  sb_sw_sign_message_sha256(&ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
+  sb_sw_sign_message_sha256(&sb_ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
 
   // Clear key
   ZERO(priv);
