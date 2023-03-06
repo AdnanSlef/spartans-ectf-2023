@@ -35,7 +35,7 @@ def main():
     pin = args.pair_pin
 
     # Open the secret file if it exists
-    secret_file = args.secrets_dir / "car_secrets.json"
+    secret_file = Path(args.secret_file)
     if secret_file.exists():
         with open(secret_file, "r") as fp:
             secrets = json.load(fp)
