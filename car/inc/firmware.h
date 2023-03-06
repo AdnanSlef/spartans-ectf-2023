@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
   sb_sw_signature_t unlock;
-  PACKAGE feature1;
+  PACKAGE feature1;// TODO PACKAGE feature[3];
   PACKAGE feature2;
   PACKAGE feature3;
 } RESPONSE;

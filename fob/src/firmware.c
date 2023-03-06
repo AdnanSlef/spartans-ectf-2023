@@ -145,7 +145,7 @@ bool init_drbg(void)
   // Initialize DRBG
   if(!(
     get_secret(&car_privkey, NULL) &&
-    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), &car_privkey, sizeof(sb_sw_private_t), "Spartans", 8) == SB_SUCCESS
+    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), (sb_byte_t *)&car_privkey, sizeof(sb_sw_private_t), (sb_byte_t *)"Spartans", 8) == SB_SUCCESS
     )) return false;
 
   // Clear private key
@@ -155,11 +155,11 @@ bool init_drbg(void)
   memcpy(&temp_entropy, (void *)ENTROPY_FLASH, sizeof(temp_entropy));
 
   // Update Entropy
-  if(sb_hmac_drbg_generate(&drbg, &temp_entropy, sizeof(temp_entropy))
+  if(sb_hmac_drbg_generate(&drbg, (sb_byte_t *)&temp_entropy, sizeof(temp_entropy))
     != SB_SUCCESS) return false;
 
   // Commit Entropy
-  if(FlashErase(ENTROPY_FLASH) || FlashProgram(&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
+  if(FlashErase(ENTROPY_FLASH) || FlashProgram((uint32_t *)&temp_entropy, ENTROPY_FLASH, sizeof(ENTROPY))) return false;
   
   // Success
   return true;
@@ -185,7 +185,7 @@ bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
       return false;
     }
     if(priv) {
-      EEPROMRead(priv, offsetof(FOB_DATA, car_privkey), sizeof(sb_sw_private_t));
+      EEPROMRead((uint32_t *)priv, offsetof(FOB_DATA, car_privkey), sizeof(sb_sw_private_t));
     }
     if(pin) {
       EEPROMRead(pin, offsetof(FOB_DATA, pin), sizeof(uint32_t));
@@ -218,7 +218,7 @@ void pPairFob(void)
   if(!PFOB) return;
 
   // Receive PIN attempt from host
-  uart_read(HOST_UART, &host_pin, sizeof(host_pin));
+  uart_read(HOST_UART, (uint8_t *)&host_pin, sizeof(host_pin));
 
   // Verify PIN attempt
   if(!get_secret(NULL, &true_pin)) return;
@@ -230,7 +230,7 @@ void pPairFob(void)
   
   // PIN Successful, Do Pairing
   if(!get_secret(&pair_packet.car_privkey, &pair_packet.pin)) return;
-  uart_write(UFOB_UART, &pair_packet, sizeof(pair_packet));
+  uart_write(UFOB_UART, (uint8_t *)&pair_packet, sizeof(pair_packet));
 }
 
 /**
@@ -249,7 +249,7 @@ void uPairFob(void)
   }
 
   // Get pairing packet from paired fob
-  uart_read(PFOB_UART, &pair_packet, sizeof(pair_packet));
+  uart_read(PFOB_UART, (uint8_t *)&pair_packet, sizeof(pair_packet));
 
   // Save the newly received values
   loadFobState(&temp_flash);
@@ -276,7 +276,7 @@ void enableFeature(void)
   uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
 
   // Get the package for the feature from the host
-  uart_read(CAR_UART, &package, sizeof(PACKAGE));
+  uart_read(CAR_UART, (uint8_t *)&package, sizeof(PACKAGE));
 
   // Store the feature package
   if(feature_num < NUM_FEATURES) {
@@ -295,7 +295,6 @@ void unlockCar(void)
 {
   CHALLENGE challenge;
   RESPONSE response;
-  FOB_DATA temp_flash;
 
   // Paired fob only
   if(!PFOB) return;
@@ -312,7 +311,7 @@ void unlockCar(void)
   gen_response(&challenge, &response);
   
   // Prepare Feature Requests
-  memcpy(&response.feature1, FOB_FLASH->feature, sizeof(FOB_DATA.feature));//todo update RESPONSE to use feature
+  memcpy(&response.feature, FOB_FLASH->feature, sizeof(response.feature));
 
   // Send Response with Features
   finalize_unlock(&response);
@@ -340,7 +339,7 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   if(!get_secret(&priv, NULL))return;
   
   // Generate response
-  sb_sw_sign_message_sha256(&sb_ctx, &_hash, &response->unlock, &priv, &challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
+  sb_sw_sign_message_sha256(&sb_ctx, &_hash, &response->unlock, &priv, (sb_byte_t *)&challenge->data, sizeof(challenge->data), &drbg, SB_SW_CURVE_P256, ENDIAN);
 
   // Clear key
   ZERO(priv);

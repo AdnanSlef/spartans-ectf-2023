@@ -54,9 +54,7 @@ typedef struct {
 // Defines a struct of the response for the challenge-response mechanism
 typedef struct {
   sb_sw_signature_t unlock;
-  PACKAGE feature1;
-  PACKAGE feature2;
-  PACKAGE feature3;
+  PACKAGE feature[3];
 } RESPONSE;
 
 // Defines a struct for the format of a pairing message
