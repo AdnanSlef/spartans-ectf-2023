@@ -49,7 +49,7 @@ def main():
     
     # Load car private key
     if args.paired:
-        car_privkey_pem = secrets[args.car_id]["privkey_pem"]
+        car_privkey_pem = secrets[str(args.car_id)]["privkey_pem"]
         car_privkey = ecc.import_key(car_privkey_pem)
         car_privkey_bytes = long_to_bytes(car_privkey.d, ECC_PRIVSIZE)
     else:
@@ -65,7 +65,7 @@ def main():
     )
 
     # Write EEPROM File
-    eeprom_path = args.secrets_dir / f"pfob_{args.car_id}_eeprom"
+    eeprom_path = args.secrets_dir / "temp_eeprom"
     with open(eeprom_path, "wb") as fp:
         fp.write(eeprom_data)
 

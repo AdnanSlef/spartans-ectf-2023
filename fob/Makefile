@@ -61,7 +61,7 @@ unpaired_fob_arg_check:
 	$(call check_defined, SECRETS_DIR BIN_PATH ELF_PATH EEPROM_PATH)
 
 unpaired_fob_gen_secret:
-	python3 gen_secret.py --header-file inc/secrets.h
+	python3 gen_secret.py --secrets-dir ${SECRETS_DIR} --header-file inc/secrets.h
 
 
 ################ END fob customization ################
@@ -188,7 +188,8 @@ ${COMPILER}/firmware.axf: ${TIVA_ROOT}/driverlib/${COMPILER}/libdriver.a
 copy_artifacts:
 	cp ${COMPILER}/firmware.bin ${BIN_PATH}
 	cp ${COMPILER}/firmware.axf ${ELF_PATH}
-	cp ${SECRETS_DIR}/pfob_${CAR_ID}_eeprom ${EEPROM_PATH}
+	cp ${SECRETS_DIR}/temp_eeprom ${EEPROM_PATH}
+	rm ${SECRETS_DIR}/temp_eeprom
 
 SCATTERgcc_firmware=${TIVA_ROOT}/firmware.ld
 ENTRY_firmware=Firmware_Startup
