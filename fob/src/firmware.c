@@ -236,24 +236,25 @@ void pPairFob(void)
  *
  * @param fob_state_ram pointer to the current fob state in ram
  */
-void uPairFob(FLASH_DATA *fob_state_ram)
+void uPairFob(void)
 {
-  uint32_t PIN;
-  sb_sw_private_t key;
-  FOB_DATA data;
-  PAIR_PACKET
+  FOB_DATA temp_flash;
+  PAIR_PACKET pair_packet;
 
-  // original unpaired fob only
+  // Original unpaired fob only
   if(!(UFOB && OG_UFOB)) {
     return;
   }
 
-  // TODO expand on pseudocode, then implement
-  // get_PIN(&PIN, PFOB_UART)
-  // get_key(&key, PFOB_UART)
-  // set_PIN(PIN)
-  // set_key(key)
-  // PFOB true, UFOB false
+  // Get pairing packet from paired fob
+  uart_read(PFOB_UART, &pair_packet, sizeof(pair_packet));
+
+  // Save the newly received values
+  // todo checkout temp_flash
+  temp_flash.pin = pair_packet.pin;
+  memcpy(&temp_flash.car_privkey, &pair_packet.car_privkey, sizeof(temp_flash.car_privkey));
+  temp_flash.paired = YES_PAIRED; // todo make sure this works to make PFOB true, UFOB false
+  // todo commit temp_flash
 }
 
 /**
@@ -356,12 +357,9 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
 
   // Only paired fobs respond to challenges
   if(!PFOB) return;
-
+UFOB
   // Clear empy data
   ZERO(sb_ctx);
-
-  // Prepare DRBG
-  prep_drbg();
 
   // Get signing key
   if(!get_secret(priv, NULL))return;
