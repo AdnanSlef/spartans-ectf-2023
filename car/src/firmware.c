@@ -208,7 +208,7 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
 }
 
 bool unlockCar(void) {
-  uint8_t eeprom_message[64];
+  uint8_t eeprom_message[UNLOCK_EEPROM_SIZE];
 
   // Clear eeprom message
   ZERO(eeprom_message);
@@ -218,10 +218,10 @@ bool unlockCar(void) {
     return false;
   }
   // Load Unlock Success Message
-  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, UNLOCK_EEPROM_SIZE);
+  EEPROMRead((uint32_t *)eeprom_message, UNLOCK_EEPROM_LOC, sizeof(eeprom_message));
 
   // Display Unlock Success Message
-  uart_write(HOST_UART, &eeprom_message, UNLOCK_EEPROM_SIZE);
+  uart_write(HOST_UART, eeprom_message, sizeof(eeprom_message));
 
   // Clear eeprom message
   ZERO(eeprom_message);
@@ -234,7 +234,7 @@ bool unlockCar(void) {
  */
 bool startCar(RESPONSE *response) {
   uint32_t i;
-  uint8_t eeprom_message[64];
+  uint8_t eeprom_message[FEATURE_SIZE];
   PACKAGE package;
 
   // Print out feature messages for all active features
@@ -246,8 +246,8 @@ bool startCar(RESPONSE *response) {
         return false;
       }
       // Send feature message
-      EEPROMRead((uint32_t *)&eeprom_message, FEATURE_END - (i+1) * FEATURE_SIZE, FEATURE_SIZE);
-      uart_write(HOST_UART, &eeprom_message, FEATURE_SIZE);
+      EEPROMRead((uint32_t *)eeprom_message, FEATURE_END - (i+1) * FEATURE_SIZE, sizeof(eeprom_message));
+      uart_write(HOST_UART, eeprom_message, sizeof(eeprom_message));
     }
   }
   return true;
