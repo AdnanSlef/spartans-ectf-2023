@@ -69,7 +69,8 @@ bool fob_requests_unlock(void) {
  * @brief Send a challenge-respones challenge to the secure fob device
 */
 bool send_challenge(CHALLENGE *challenge) {
-  uart_write(FOB_UART, challenge, sizeof(CHALLENGE));
+  uart_write(FOB_UART, (uint8_t *)challenge, sizeof(CHALLENGE));
+  return true;
 }
 
 /**

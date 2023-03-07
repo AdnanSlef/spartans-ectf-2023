@@ -38,9 +38,11 @@ include ${TIVA_ROOT}/makedefs
 
 # Optimizations
 CFLAGS+=-Os
+CFLAGS+=-Wno-pedantic
 
 # Defenses
 # CFLAGS+=-fstack-protector-all
+
 
 # check that parameters are defined
 check_defined = \

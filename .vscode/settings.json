@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "gpio.h": "c",
-        "sb_sha256.h": "c"
+        "sb_sha256.h": "c",
+        "sb_all.h": "c",
+        "sysctl.h": "c"
     },
     "cortex-debug.variableUseNaturalFormat": false
 }

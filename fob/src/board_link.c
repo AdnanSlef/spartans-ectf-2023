@@ -24,7 +24,11 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 
+#include "sb_all.h"
+
 #include "board_link.h"
+#include "uart.h"
+#include "firmware.h"
 
 /**
  * @brief Set the up board link object
@@ -51,13 +55,13 @@ void setup_board_link(void) {
 }
 
 void request_unlock(void) {
-  uart_writeb(CAR_UART, UNLOCK_REQ);
+  uart_writeb(CAR_UART, (uint8_t)UNLOCK_REQ);
 }
 
 void get_challenge(CHALLENGE *challenge) {
-  uart_read(CAR_UART, challenge, sizeof(CHALLENGE));
+  uart_read(CAR_UART, (uint8_t *)challenge, sizeof(CHALLENGE));
 }
 
 void finalize_unlock(RESPONSE *response) {
-  uart_write(CAR_UART, response, sizeof(RESPONSE));
+  uart_write(CAR_UART, (uint8_t *)response, sizeof(RESPONSE));
 }
