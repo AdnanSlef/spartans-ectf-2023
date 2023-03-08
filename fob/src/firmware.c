@@ -287,7 +287,7 @@ void enableFeature(void)
   uint8_t feature_num = (uint8_t)uart_readb(HOST_UART) - 1;
 
   // Get the package for the feature from the host
-  uart_read(CAR_UART, (uint8_t *)&package, sizeof(PACKAGE));
+  uart_read(HOST_UART, (uint8_t *)&package, sizeof(PACKAGE));
 
   // Store the feature package
   if(feature_num < NUM_FEATURES) {
