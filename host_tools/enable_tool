@@ -1,16 +1,12 @@
 #!/usr/bin/python3 -u
 
 # @file enable_tool
-# @author Frederich Stine
+# @author Spartan State Security Team
 # @brief host tool for enabling a feature on a fob
 # @date 2023
 #
-# This source file is part of an example system for MITRE's 2023 Embedded
-# CTF (eCTF). This code is being provided only for educational purposes for the
-# 2023 MITRE eCTF competition, and may not meet MITRE standards for quality.
-# Use this code at your own risk!
-#
-# @copyright Copyright (c) 2023 The MITRE Corporation
+#  This source file is part of our designed system
+#  for MITRE's 2023 Embedded System CTF (eCTF).
 
 import socket
 import argparse
@@ -34,18 +30,6 @@ def enable(fob_bridge, package_name):
 
     # Send package to fob
     fob_sock.send(message)
-
-    # # Set timeout for if enable fails
-    # fob_sock.settimeout(5)
-    # # Try to receive data - if failed, enabling failed
-    # try:
-    #     enable_success = fob_sock.recv(7)
-    #     while len(enable_success) != 7:
-    #         enable_success += fob_sock.recv(7 - len(enable_success))
-
-    #     print(enable_success)
-    # except socket.timeout:
-    #     sys.exit("Failed to enable feature")
 
     return 0
 

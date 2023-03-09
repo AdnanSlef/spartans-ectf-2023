@@ -3,6 +3,9 @@
  * @author Spartan State Security Team
  * @brief File that contains header information for the firmware of the Secure Car device
  * @date 2023
+ * 
+ * This source file is part of our designed system
+ * for MITRE's 2023 Embedded System CTF (eCTF).
  */
 
 #ifndef CAR_FIRMWARE_H

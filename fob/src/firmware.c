@@ -6,6 +6,7 @@
  *
  * This source file is part of our designed system
  * for MITRE's 2023 Embedded System CTF (eCTF).
+ * 
  * It implements the primary functionality of the keyfob device.
  */
 

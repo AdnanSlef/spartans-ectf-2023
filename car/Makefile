@@ -1,12 +1,9 @@
 #  2023 eCTF
-#  Car Makefile
-#  Kyle Scaplen
+#  Secure Car Makefile
+#  Spartan State Security Team
 #
-#  (c) 2023 The MITRE Corporation
-#
-# This source file is part of an example system for MITRE's 2023 Embedded System CTF (eCTF).
-# This code is being provided only for educational purposes for the 2023 MITRE eCTF competition,
-# and may not meet MITRE standards for quality. Use this code at your own risk!
+#  This source file is part of our designed system
+#  for MITRE's 2023 Embedded System CTF (eCTF).
 
 # define the part type and base directory - must be defined for makedefs to work
 PART=TM4C123GH6PM
@@ -37,10 +34,6 @@ include ${TIVA_ROOT}/makedefs
 # Optimizations
 CFLAGS+=-O3
 CFLAGS+=-Wno-pedantic
-
-# Defenses
-# CFLAGS+=-fstack-protector-all
-
 
 # check that parameters are defined
 check_defined = \

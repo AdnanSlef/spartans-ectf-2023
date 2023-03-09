@@ -1,16 +1,12 @@
 #!/usr/bin/python3 -u
 
 # @file package_tool
-# @author Frederich Stine
+# @author Spartan State Security Team
 # @brief host tool for packaging a feature for a fob
 # @date 2023
 #
-# This source file is part of an example system for MITRE's 2023 Embedded
-# CTF (eCTF). This code is being provided only for educational purposes for the
-# 2023 MITRE eCTF competition, and may not meet MITRE standards for quality.
-# Use this code at your own risk!
-#
-# @copyright Copyright (c) 2023 The MITRE Corporation
+#  This source file is part of our designed system
+#  for MITRE's 2023 Embedded System CTF (eCTF).
 
 import argparse
 import json
@@ -66,7 +62,6 @@ def package(package_name, car_id, feature_number):
     package_signed_message_bytes = feature_num_bytes + signature
 
     # Write data out to package file
-    # /package_dir/ is the mounted location inside the container - should not change
     with open(f"/package_dir/{package_name}", "wb") as fhandle:
         fhandle.write(package_signed_message_bytes)
 

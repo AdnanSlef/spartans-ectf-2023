@@ -1,8 +1,11 @@
 /**
  * @file firmware.h
  * @author Spartan State Security Team
- * @brief File that contains header information for the firmware of the key fob device
+ * @brief File that contains header information for the firmware of the Secure Key Fob device
  * @date 2023
+ * 
+ * This source file is part of our designed system
+ * for MITRE's 2023 Embedded System CTF (eCTF).
  */
 
 #ifndef FOB_FIRMWARE_H

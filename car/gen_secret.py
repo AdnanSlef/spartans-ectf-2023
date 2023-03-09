@@ -65,6 +65,9 @@ def main():
     # Generate Entropy
     entropy = get_random_bytes(0x400)
 
+    # Identify the Non-Package
+    non_package = [255]*64
+
     # Pack Car Data for EEPROM
     eeprom_data = host_pubkey_bytes + car_pubkey_bytes
     eeprom_path = args.secrets_dir / f"car_{args.car_id}_eeprom"
@@ -79,6 +82,7 @@ def main():
         fp.write("#define __CAR_SECRETS__\n\n")
         fp.write('#include "firmware.h"\n')
         fp.write(f"const uint8_t S_ENTROPY[sizeof(ENTROPY)] = {{ {','.join(hex(b) for b in entropy)} }};\n")
+        fp.write(f"const uint8_t NON_PACKAGE[sizeof(PACKAGE)] = {{ {','.join(hex(b) for b in non_package)} }};\n")
         fp.write("#endif\n")
 
 

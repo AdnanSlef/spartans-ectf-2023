@@ -1,15 +1,13 @@
 /**
  * @file main.c
- * @author Frederich Stine
- * @brief eCTF Car Example Design Implementation
+ * @author Spartan State Security Team
+ * @brief Secure Car Design Implementation
  * @date 2023
  *
- * This source file is part of an example system for MITRE's 2023 Embedded
- * System CTF (eCTF). This code is being provided only for educational purposes
- * for the 2023 MITRE eCTF competition, and may not meet MITRE standards for
- * quality. Use this code at your own risk!
- *
- * @copyright Copyright (c) 2023 The MITRE Corporation
+ * This source file is part of our designed system
+ * for MITRE's 2023 Embedded System CTF (eCTF).
+ * 
+ * It implements the primary functionality of the car device.
  */
 
 #include <stdbool.h>
@@ -42,19 +40,17 @@
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
 
-const uint8_t NON_PACKAGE[sizeof(PACKAGE)] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-
 /**
- * @brief Main function for the car example
+ * @brief Main function for the secure car device
  *
- * Initializes the RF module and waits for a successful unlock attempt.
- * If successful prints out the unlock flag.
+ * Initializes the device and peripherals,
+ * then enters an infinite loop of handling unlock requests.
  */
 int main(void)
 {
   // Configure Clock
   SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
-  
+
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
@@ -81,8 +77,8 @@ int main(void)
   // Initialize board link UART
   setup_board_link();
 
+  // Always wait to handle unlock requests
   while (true) {
-
     tryUnlock();
   }
 }
@@ -97,7 +93,7 @@ bool tryUnlock(void) {
   // Clear response
   ZERO(response);
 
-  return // Ensure the below code isn't optimized out
+  return // Ensure below code isn't optimized out
 
   // Make sure the fob is requesting an unlock
   fob_requests_unlock() &&
@@ -160,10 +156,26 @@ bool init_drbg(void)
   return true;
 }
 
+/**
+ * @brief Generate a challenge to send to the fob
+ * 
+ * @param challenge [out] The challenge being written
+ * 
+ * @return `true` if challenge was successfully generated
+ */
 bool gen_challenge(CHALLENGE *challenge) {
   return sb_hmac_drbg_generate(&drbg, (sb_byte_t *)challenge, sizeof(CHALLENGE)) == SB_SUCCESS;
 }
 
+/**
+ * @brief Validates the response to a challenge,
+ * as well as the requested features
+ * 
+ * @param challenge [in] The challenge which was sent to the secure fob device
+ * @param response  [in] The response to validate
+ * 
+ * @return `true` if response is valid
+ */
 bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   sb_sw_context_t sb_ctx;
   sb_sha256_state_t sha;
