@@ -123,7 +123,7 @@ bool init_drbg(void)
   sb_sw_public_t car_pubkey;
   volatile uint32_t tick;
 
-  // Check for Entropy Error; TODO get the entropy into flash to begin with
+  // Check for Entropy Error
   if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
      ((uint32_t*)ENTROPY_FLASH)[2] == ((uint32_t*)ENTROPY_FLASH)[3] &&
      ((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[4])

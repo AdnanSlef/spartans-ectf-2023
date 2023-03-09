@@ -10,9 +10,6 @@ PART=TM4C123GH6PM
 CFLAGSgcc=-DTARGET_IS_TM4C123_RB1
 ROOT=.
 
-# Uncomment to enable debug symbols, TODO remove
-DEBUG=1
-
 # additional base directories
 TIVA_ROOT=${ROOT}/lib/tivaware
 
