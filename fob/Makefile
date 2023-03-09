@@ -37,7 +37,7 @@ include ${TIVA_ROOT}/makedefs
 
 
 # Optimizations
-CFLAGS+=-Os
+CFLAGS+=-O3
 CFLAGS+=-Wno-pedantic
 
 # Defenses
