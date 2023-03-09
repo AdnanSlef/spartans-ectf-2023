@@ -139,7 +139,7 @@ bool init_drbg(void)
 
   // Initialize DRBG
   if(sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY),
-                       (sb_byte_t *)&car_pubkey, sizeof(sb_sw_public_t), (sb_byte_t *)"Spartans", 8)
+                       (sb_byte_t *)&car_pubkey, sizeof(sb_sw_public_t), (sb_byte_t *)"Spartans", 8) //todo systick, move init_drbg to later
      != SB_SUCCESS)
      return false;
 
@@ -183,8 +183,8 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   ZERO(hash);
 
   // Verify each of the feature signatures
-  for(i=0; i<NUM_FEATURES; i++) {
-    package = response->feature[i];
+  for(i=1; i<=NUM_FEATURES; i++) {
+    package = response->feature[i-1];
     if(memcmp(&package, &NON_PACKAGE, sizeof(PACKAGE))) {
       sb_sha256_init(&sha);
       sb_sha256_update(&sha, (sb_byte_t *)&car_pubkey, sizeof(car_pubkey));
