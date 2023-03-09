@@ -88,10 +88,9 @@ bool get_response(RESPONSE *response) {
   uint32_t i = 0;
   uint32_t j = 0;
 
-  bool success = false;
   bool started = false;
 
-  while(j<10) {
+  while(j<8) {
     HWREG(NVIC_ST_CURRENT) = 0; // Reset SysTick counter
     j++;
     tick = SysTickValueGet();
@@ -101,8 +100,8 @@ bool get_response(RESPONSE *response) {
           buffer[i] = UARTCharGetNonBlocking(FOB_UART);
           i++;
           if (i == buffer_length) {
-            success = true;
-            break;
+            SysTickDisable();
+            return true;
           }
         }
         else if (UARTCharGetNonBlocking(FOB_UART) == RESP_START) {
@@ -114,6 +113,5 @@ bool get_response(RESPONSE *response) {
   }
 
   SysTickDisable();
-
-  return success;
+  return false;
 }
