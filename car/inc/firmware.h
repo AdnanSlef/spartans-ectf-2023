@@ -23,7 +23,9 @@
 // Entropy
 #define ENTROPY_FLASH 0x3FC00
 
-// Endianness
+// System Information
+#define SPEED 80000000
+#define BAUD 115200
 #define ENDIAN 1
 
 /*** Structure definitions ***/

@@ -53,6 +53,9 @@ sb_hmac_drbg_state_t drbg;
  */
 int main(void)
 {
+  // Configure Clock
+  SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
@@ -181,8 +184,7 @@ bool init_drbg(void)
  *
  */
 void SLEEP(void) {
-  // (16000000/3)*5
-  SysCtlDelay(26666665);
+  SysCtlDelay(SPEED/3*5);
 }
 
 bool pfob(void)

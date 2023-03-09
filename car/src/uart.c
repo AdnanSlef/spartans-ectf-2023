@@ -26,6 +26,7 @@
 #include "inc/hw_uart.h"
 
 #include "uart.h"
+#include "firmware.h"
 
 /**
  * @brief Initialize the UART interfaces.
@@ -56,7 +57,7 @@ void uart_init(void) {
 
   // Configure the UART for 115,200, 8-N-1 operation.
   UARTConfigSetExpClk(
-      UART0_BASE, SysCtlClockGet(), 115200,
+      UART0_BASE, SPEED, BAUD,
       (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 }
 
@@ -114,7 +115,7 @@ uint32_t uart_write(uint32_t uart, uint8_t *buf, uint32_t len) {
   uint32_t i;
 
   for (i = 0; i < len; i++) {
-    SysCtlDelay(150);
+    SysCtlDelay(SPEED/BAUD);
     uart_writeb(uart, buf[i]);
   }
 

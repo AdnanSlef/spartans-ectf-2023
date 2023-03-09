@@ -50,7 +50,11 @@ const uint8_t NON_PACKAGE[sizeof(PACKAGE)] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff
  * Initializes the RF module and waits for a successful unlock attempt.
  * If successful prints out the unlock flag.
  */
-int main(void) {
+int main(void)
+{
+  // Configure Clock
+  SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+  
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();

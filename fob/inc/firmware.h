@@ -20,7 +20,9 @@
 #define PFOB pfob()
 #define UFOB !pfob()
 
-// Endianness
+// System Information
+#define SPEED 80000000
+#define BAUD 115200
 #define ENDIAN 1
 
 // Entropy

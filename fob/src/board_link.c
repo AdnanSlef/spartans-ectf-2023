@@ -46,7 +46,7 @@ void setup_board_link(void) {
 
   // Configure the UART for 115,200, 8-N-1 operation.
   UARTConfigSetExpClk(
-      BOARD_UART, SysCtlClockGet(), 115200,
+      BOARD_UART, SPEED, BAUD,
       (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
   while (UARTCharsAvail(BOARD_UART)) {
