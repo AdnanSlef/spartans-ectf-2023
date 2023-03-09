@@ -59,9 +59,11 @@ void request_unlock(void) {
 }
 
 void get_challenge(CHALLENGE *challenge) {
+  while(uart_readb(CAR_UART) != CHAL_START);
   uart_read(CAR_UART, (uint8_t *)challenge, sizeof(CHALLENGE));
 }
 
 void finalize_unlock(RESPONSE *response) {
+  uart_writeb(CAR_UART, RESP_START);
   uart_write(CAR_UART, (uint8_t *)response, sizeof(RESPONSE));
 }

@@ -69,6 +69,7 @@ bool fob_requests_unlock(void) {
  * @brief Send a challenge-respones challenge to the secure fob device
 */
 bool send_challenge(CHALLENGE *challenge) {
+  uart_writeb(FOB_UART, CHAL_START);
   uart_write(FOB_UART, (uint8_t *)challenge, sizeof(CHALLENGE));
   return true;
 }
@@ -92,15 +93,22 @@ bool get_response(RESPONSE *response) {
   uint32_t i = 0;
 
   bool success = false;
+  bool started = false;
 
-  while (tick > 1000) {
+  // while (tick > 1000) {
+  while (true) {//TODO enable timeout
     if (UARTCharsAvail(FOB_UART) && i < buffer_length) {
-      buffer[i] = UARTCharGetNonBlocking(FOB_UART);
-      i++;
+      if(started) {
+        buffer[i] = UARTCharGetNonBlocking(FOB_UART);
+        i++;
 
-      if (i == buffer_length) {
-        success = true;
-        break;
+        if (i == buffer_length) {
+          success = true;
+          break;
+        }
+      }
+      else if (UARTCharGetNonBlocking(FOB_UART) == RESP_START) {
+        started = true;
       }
     }
 

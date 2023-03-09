@@ -22,6 +22,8 @@
 #include "uart.h"
 
 #define UNLOCK_MAGIC 0x56
+#define CHAL_START 0x57
+#define RESP_START 0x58
 #define FOB_UART ((uint32_t)UART1_BASE)
 
 /**

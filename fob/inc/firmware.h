@@ -31,6 +31,8 @@
 #define P_PAIR_CMD 0x20
 #define U_PAIR_CMD 0x30
 #define UNLOCK_REQ 0x56
+#define CHAL_START 0x57
+#define RESP_START 0x58
 
 /*** FLASH Storage Information ***/
 #define FOB_STATE_PTR 0x3FC00

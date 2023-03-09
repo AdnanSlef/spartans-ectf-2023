@@ -114,7 +114,7 @@ uint32_t uart_write(uint32_t uart, uint8_t *buf, uint32_t len) {
   uint32_t i;
 
   for (i = 0; i < len; i++) {
-    SysCtlDelay(250);
+    SysCtlDelay(150);
     uart_writeb(uart, buf[i]);
   }
 
