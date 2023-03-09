@@ -1,43 +1,39 @@
-# Example Fob Firmware
-The firmware is split into a few files that may be of interest to you,
-although you are free to change any and all files in this directory as long as
-functional and build requirements are met:
+# Spartans Secure Key Fob Device Firmware
 
-* `firmware.c`: Implements the main functionality of the firmware, including `main()`
-* `uart.{c,h}`: Implements a UART interface to the host, reading and writing raw
-  bytes.
-* `board_link.{c,h}`: Implements a UART interface between the two developent boards
-  with packet structures for communications.
-* `feature_list.h`: Includes definitions for utilizing the feature list included
-  with the build process in EEPROM. This file should not need to be modified.
+## Functionality
+The secure key fob device will perform a startup routine when powered on, then will
+wait in a loop for commands to come either from the Host UART connection or from
+the SW1 Button on the board.
 
-We have also included the Tivaware driver library for working with the
-microcontroller peripherals. You can find Tivaware in `lib/tivaware` and will
-find the following files to be of interest:
+When a button press is registered, the secure key fob device will perform an unlock attempt
+on the car device connected over the Board UART. It will receive and sign the challenge
+issued by the car device, and will send back this response along with the currently held
+feature packages.
 
-* `startup_gcc.c`: Implements the system startup code, including initializing
-  the stack and jumping to the `main`. There is a good chance that you will not
-  need to change `startup_gcc.c`, but some advanced designs may require it.
-* `bootloader.ld`: The linker script to set up memory regions. There is a good
-  chance that you will not need to change `bootloader.ld`, but some advanced
-  designs may require it.
-* `makedefs`: The common definitions included when compiling the Tivaware
-  library and your firmware. If you want to specific optimizations and
-  compiler options to both Tivaware and the bootloader, add/change them here.
-  Otherwise, those options can be added to `bootloader/Makefile`.
+When a host command is registered, the secure key fob device will perform the requested operation
+if it is deemed appropriate. An unpaired fob will follow commands to become paired, while a paired
+fob will follow commands to pair an unpaired fob or to enable a feature.
 
-## On Adding Crypto
-To aid with development, we have included Makefile rules and example code for using
-[tiny-AES-c](https://github.com/kokke/tiny-AES-c) (see line 46 of the Makefile and
-lines 21 and 207 of bootloader.c). You are free to use the library for your crypto
-or simply use build process as a template for another crypto library of your choice.
+Enabling a feature entails receiving the feature package from the host.
 
-If you choose to use a different crypto library, we recommend using the following
-steps to integrate it into your system. **NOTE: All added libraries must compile
-from the `all` rule of `bootloader/Makefile` to follow the functional requirements.**
-1. Find a crypto library suitable for your embedded system. **Make sure it does not
-   require any system calls or dynamic memory allocation (i.e. malloc), as the
-   bootloader runs on bare metal without an operating system**
-2. Uncommennt the `EXAMPLE_AES=foo` line in the Makefile
-3. Run the included tests of the library to verify it works properly on your machine
-   before you integrate it with your code
+Becoming paired entails receiving and storing the necessary information from an already paired fob.
+
+For a paired fob to pair an unpaired fob entails verifying that the correct pairing PIN is entered
+by the host, then sending the necessary information to the connected unpaired fob.
+
+## Layout
+The firmware is split into the following files, with headers in `inc/` and source code in `src/`:
+
+* `firmware.{c,h}`: Implements the main functionality of the firmware, including `main()`
+* `uart.{c,h}`: Implements communications over theUART interface, reading and writing raw bytes.
+* `board_link.{c,h}`: Implements higher-level UART communications, with an emphasis on
+      board-to-board communications.
+
+## Libraries
+We have included the Tivaware driver library for working with the
+microcontroller peripherals. You can find Tivaware in `lib/tivaware`.
+
+We have also included the [Sweet B](https://github.com/westerndigitalcorporation/sweet-b)
+library for cryptographic signatures and for cryptographically secure random number generation.
+You can find Sweet B in `lib/sweet-b`.
+

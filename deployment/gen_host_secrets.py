@@ -1,4 +1,10 @@
-# Generate host secrets and store them in volume
+# @file gen_host_secrets.py
+# @author Spartan State Security Team
+# @brief Generates the host secrets for a deployment
+# @date 2023
+#
+#  This source file is part of our designed system
+#  for MITRE's 2023 Embedded System CTF (eCTF).
 
 import argparse
 from pathlib import Path

@@ -39,6 +39,7 @@ def pair(unpaired_fob_bridge, paired_fob_bridge, pair_pin):
     time.sleep(0.2)
     pair_pin_bytes = struct.pack('<I',int(pair_pin,16))
     paired_sock.send(pair_pin_bytes)
+    time.sleep(0.2)
 
     return 0
 

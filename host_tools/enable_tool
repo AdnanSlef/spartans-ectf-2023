@@ -10,6 +10,7 @@
 
 import socket
 import argparse
+import time
 import sys
 
 # @brief Function to send commands to enable a feature on a fob
@@ -30,6 +31,8 @@ def enable(fob_bridge, package_name):
 
     # Send package to fob
     fob_sock.send(message)
+
+    time.sleep(0.2)
 
     return 0
 

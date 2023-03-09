@@ -1,11 +1,9 @@
-# Example Host Tools
+# Spartans Host Tools
 The host tools are split into four different files that may be of interest.
-These host tools implement an example of how to utilize the required functionality:
 
-* `enable_tool`: Implements sending a packaged feature to a fob
-* `package_tool`: Implements creating a packaged feature
+* `enable_tool`: Send a packaged feature to the secure key fob device
+* `package_tool`: Securely package a feature for a secure car device
 * `unlock_tool`: Listens for unlock messages from the car while unlocking via button
-* `pair_tool`: Implements pairing an unpaired fob through a paired fob
+* `pair_tool`: Implements pairing an unpaired key fob through a paired key fob
 
-The example host tools are written in Python 3 (>=3.6), but these tools can be
-implemented in the language of your choosing.
+The host tools are written in Python 3.
