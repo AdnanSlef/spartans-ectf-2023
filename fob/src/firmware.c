@@ -241,6 +241,7 @@ void pPairFob(void)
   
   // PIN Successful, Do Pairing
   if(!get_secret(&pair_packet.car_privkey, &pair_packet.pin)) return;
+  uart_writeb(UFOB_UART, PAIR_START);
   uart_write(UFOB_UART, (uint8_t *)&pair_packet, sizeof(pair_packet));
 }
 
@@ -260,6 +261,7 @@ void uPairFob(void)
   }
 
   // Get pairing packet from paired fob
+  while(uart_readb(PFOB_UART) != PAIR_START);
   uart_read(PFOB_UART, (uint8_t *)&pair_packet, sizeof(pair_packet));
 
   // Save the newly received values

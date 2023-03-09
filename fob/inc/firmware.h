@@ -33,6 +33,7 @@
 #define UNLOCK_REQ 0x56
 #define CHAL_START 0x57
 #define RESP_START 0x58
+#define PAIR_START 0x21
 
 /*** FLASH Storage Information ***/
 #define FOB_STATE_PTR 0x3FC00
