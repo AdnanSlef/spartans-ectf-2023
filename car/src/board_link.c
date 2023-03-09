@@ -79,7 +79,6 @@ bool send_challenge(CHALLENGE *challenge) {
  */
 bool get_response(RESPONSE *response) {
   SysTickPeriodSet(16000000);
-  HWREG(NVIC_ST_CURRENT) = 0; // Reset SysTick counter
   SysTickEnable();
 
   volatile uint32_t tick = SysTickValueGet();
@@ -87,28 +86,31 @@ bool get_response(RESPONSE *response) {
   uint8_t * buffer = (uint8_t *) response;
   uint32_t buffer_length = sizeof(RESPONSE);
   uint32_t i = 0;
+  uint32_t j = 0;
 
   bool success = false;
   bool started = false;
 
-  // while (tick > 1000) {
-  while (true) {//TODO enable timeout
-    if (UARTCharsAvail(FOB_UART) && i < buffer_length) {
-      if(started) {
-        buffer[i] = UARTCharGetNonBlocking(FOB_UART);
-        i++;
-
-        if (i == buffer_length) {
-          success = true;
-          break;
+  while(j<10) {
+    HWREG(NVIC_ST_CURRENT) = 0; // Reset SysTick counter
+    j++;
+    tick = SysTickValueGet();
+    while (tick > 1000) {
+      if (UARTCharsAvail(FOB_UART) && i < buffer_length) {
+        if(started) {
+          buffer[i] = UARTCharGetNonBlocking(FOB_UART);
+          i++;
+          if (i == buffer_length) {
+            success = true;
+            break;
+          }
+        }
+        else if (UARTCharGetNonBlocking(FOB_UART) == RESP_START) {
+          started = true;
         }
       }
-      else if (UARTCharGetNonBlocking(FOB_UART) == RESP_START) {
-        started = true;
-      }
+      tick = SysTickValueGet();
     }
-
-    tick = SysTickValueGet();
   }
 
   SysTickDisable();

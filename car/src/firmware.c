@@ -23,6 +23,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/systick.h"
 #include "driverlib/timer.h"
 
 #include "secrets.h"
@@ -39,6 +40,7 @@
 /*** Globals ***/
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
+bool DRBG_INITIALIZED = false;
 
 /**
  * @brief Main function for the secure car device
@@ -63,14 +65,12 @@ int main(void)
     if( FlashErase(ENTROPY_FLASH)
      || FlashProgram((uint32_t *)&S_ENTROPY, ENTROPY_FLASH, sizeof(ENTROPY))
     ) return -1;
-    
   }
 
-  // Initialize DRBG
-  if (!init_drbg()) {
-    return -1;
-  }
-
+  // Initialize SysTick
+  SysTickPeriodSet(16000000);
+  SysTickEnable();
+  
   // Initialize UART peripheral
   uart_init();
 
@@ -121,6 +121,7 @@ bool init_drbg(void)
 {
   ENTROPY temp_entropy;
   sb_sw_public_t car_pubkey;
+  volatile uint32_t tick;
 
   // Check for Entropy Error; TODO get the entropy into flash to begin with
   if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
@@ -138,8 +139,9 @@ bool init_drbg(void)
      return false;
 
   // Initialize DRBG
+  tick = SysTickValueGet();
   if(sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY),
-                       (sb_byte_t *)&car_pubkey, sizeof(sb_sw_public_t), (sb_byte_t *)"Spartans", 8) //todo systick, move init_drbg to later
+                       (sb_byte_t *)&car_pubkey, sizeof(sb_sw_public_t), (sb_byte_t *)&tick, sizeof(tick))
      != SB_SUCCESS)
      return false;
 
@@ -164,6 +166,13 @@ bool init_drbg(void)
  * @return `true` if challenge was successfully generated
  */
 bool gen_challenge(CHALLENGE *challenge) {
+  // Initialize DRBG
+  if (!DRBG_INITIALIZED) {
+    if(!init_drbg()) {
+      return -1;
+    }
+    DRBG_INITIALIZED = true;
+  }
   return sb_hmac_drbg_generate(&drbg, (sb_byte_t *)challenge, sizeof(CHALLENGE)) == SB_SUCCESS;
 }
 

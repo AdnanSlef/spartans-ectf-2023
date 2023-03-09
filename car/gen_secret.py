@@ -1,16 +1,12 @@
 #!/usr/bin/python3 -u
 
 # @file gen_secret
-# @author Jake Grycel
-# @brief Example script to generate header containing secrets for the car
+# @author Spartan State Security Team
+# @brief Script to generate header containing secrets for the secure car device
 # @date 2023
 #
-# This source file is part of an example system for MITRE's 2023 Embedded CTF (eCTF).
-# This code is being provided only for educational purposes for the 2023 MITRE eCTF
-# competition,and may not meet MITRE standards for quality. Use this code at your
-# own risk!
-#
-# @copyright Copyright (c) 2023 The MITRE Corporation
+#  This source file is part of our designed system
+#  for MITRE's 2023 Embedded System CTF (eCTF).
 
 import json
 import argparse
