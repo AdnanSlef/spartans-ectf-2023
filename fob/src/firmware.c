@@ -63,6 +63,11 @@ int main(void)
   // Configure Clock
   SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
+  // Configure LED
+  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
+  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+  GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0);
+
   // Ensure EEPROM peripheral is enabled
   SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
   EEPROMInit();
