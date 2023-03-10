@@ -10,6 +10,11 @@ This repository contains our team's design for MITRE's 2023 Embedded System CTF
 Our design document offers an overview of our design, emphasizing the security measures
 in place to protect the secure car and key fob devices. To view the design document, click [Spartans_Design.pdf](Spartans_Design.pdf).
 
+Additionally, we provide a collection of diagrams to offer a
+graphical demonstration of the ideas behind each of the key processes,
+as well as the natuer of the various objects in the ecosystem.
+To view this visualization document, click [Spartans_Visualize.pdf](Spartans_Visualize.pdf).
+
 Our design is further documented in README files, such as
 [car/README.md](car/README.md) and [fob/README.md](fob/README.md).
 These READMEs give an overview of the functionality of each device type.
