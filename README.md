@@ -18,8 +18,9 @@ Finally, our design is documented via docstrings and code comments to clarify
 the intention of each of the functions. Reading the header files (`*.h`)
 listed in each README will give helpful insight into how our design works,
 before diving into code in the `*.c` files. Macros, structs, and organized
-function declarations can be found in the `*.h` files. Code comments for each
-step of a function can be found in the `*.c` files.
+function declarations can be found in the `*.h` files. Docstrings for each
+function and code comments for each step of a function can be found in the
+`*.c` files.
 
 We hope that this documentation helps you get a clear picture of our design
 and how it functions.
@@ -30,3 +31,9 @@ and how it functions.
 - `docker_env` - source code for creating docker build environment
 - `fob` - source code for building secure key fob devices
 - `host_tools` - source code for the host tools
+
+## Running the Design
+Our system is designed to integrate with the
+[2023 ECTF Tools Repo](https://github.com/mitre-cyber-academy/2023-ectf-tools).
+Please see the README in that repository for instructions on how to
+build the environment, deploy devices, and interact with deployed devices.

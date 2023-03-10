@@ -84,7 +84,7 @@ typedef struct {
   uint8_t data[0x400];
 } ENTROPY;
 
-/*** Function definitions ***/
+/*** Function declarations ***/
 // Core functions
 void pPairFob(void);
 void uPairFob(void);

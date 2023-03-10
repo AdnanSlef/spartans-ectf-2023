@@ -27,9 +27,10 @@
 #include "firmware.h"
 
 /**
- * @brief Set the up board link object
+ * @brief Initialize the board link interface.
  *
- * UART 1 is used to communicate between boards
+ * UART 1 is used to communicate between boards,
+ * whether pFob or uFob or Car.
  */
 void setup_board_link(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
@@ -50,15 +51,29 @@ void setup_board_link(void) {
   }
 }
 
+/**
+ * @brief Request the car to begin unlock sequence
+ */
 void request_unlock(void) {
   uart_writeb(CAR_UART, (uint8_t)UNLOCK_REQ);
 }
 
+/**
+ * @brief Receives the challenge from the car device
+ * 
+ * @param challenge [out] The challenge being written
+ */
 void get_challenge(CHALLENGE *challenge) {
   while(uart_readb(CAR_UART) != CHAL_START);
   uart_read(CAR_UART, (uint8_t *)challenge, sizeof(CHALLENGE));
 }
 
+/**
+ * @brief Finalizes the unlock attempt by sending the
+ * generated response to the car device
+ * 
+ * @param response [in] The response to send
+ */
 void finalize_unlock(RESPONSE *response) {
   uart_writeb(CAR_UART, RESP_START);
   uart_write(CAR_UART, (uint8_t *)response, sizeof(RESPONSE));

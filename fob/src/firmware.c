@@ -50,9 +50,13 @@ bool DRBG_INITIALIZED = false;
  * @brief Main function for the Secure Fob design
  *
  * Listens to SW1 Button for an unlock command.
- * If unlock command presented (button pressed), attempts to unlock and start car.
+ * If unlock command presented (button pressed),
+ *   attempts to unlock and start car.
+ * 
  * Listens over Host UART for commands, including:
- * Enable Feature, Pair Fob (Primary), Pair Fob (Replica)
+ *   Enable Feature, Pair Fob (Primary), Pair Fob (Replica)
+ * 
+ * @return -1 if an error occurs.
  */
 int main(void)
 {
@@ -102,6 +106,11 @@ int main(void)
   }
 }
 
+/**
+ * @brief Checks whether the Host has issued a command.
+ * If a command has been issued, then perform the corresponding
+ * action if it is deemed appropriate.
+ */
 void tryHostCmd(void) {
   // Non blocking UART polling
   if (uart_avail(HOST_UART))
@@ -130,6 +139,10 @@ void tryHostCmd(void) {
   }
 }
 
+/**
+ * @brief Checks whether a button press occurs on SW1.
+ * If so, attempts to unlock the attached car device.
+ */
 void tryButton(void) {
   // Check for Button Press
   current_sw_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
@@ -147,6 +160,11 @@ void tryButton(void) {
   previous_sw_state = current_sw_state;
 }
 
+/**
+ * @brief Initialize the CSPRNG.
+ * 
+ * @return true if operation succeeds, false if an error occurs
+ */
 bool init_drbg(void)
 {
   ENTROPY temp_entropy;
@@ -185,17 +203,34 @@ bool init_drbg(void)
 
 /**
  * @brief Sleeps for 5 seconds
- *
  */
 void SLEEP(void) {
   SysCtlDelay(SPEED/3*5);
 }
 
+/**
+ * @brief Check whether this device is a paired fob
+ * 
+ * @return true if fob is paired, false if fob is unpaired
+*/
 bool pfob(void)
 {
   return OG_PFOB || FOB_FLASH->paired==YES_PAIRED;
 }
 
+/**
+ * @brief Loads a secret value from storage.
+ * 
+ * If the device was originally a paired fob,
+ * load the value from EEPROM.
+ * If the device was origynally an unpaired fob,
+ * load the value from FLASH.
+ * 
+ * @param priv [out] Where to write the car private key, or NULL if key is not wanted
+ * @param pin  [out] Where to write the pairing pin, or NULL if pin is not wanted
+ * 
+ * @return true if operation succeeds, false if an eeprom error occurs
+ */
 bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
   #if OG_PFOB == 1
     if(EEPROMInit() != EEPROM_INIT_OK){
@@ -221,9 +256,10 @@ bool get_secret(sb_sw_private_t *priv, uint32_t *pin) {
 }
 
 /**
- * @brief Function that carries out pairing of the fob
- *
- * @param fob_state_ram pointer to the current fob state in ram
+ * @brief Function that pairs the attached unpaired fob,
+ * if the Host supplies the correct pin.
+ * 
+ * If the supplied pin is incorrect, SLEEPs for a while.
  */
 void pPairFob(void)
 {
@@ -252,9 +288,9 @@ void pPairFob(void)
 }
 
 /**
- * @brief Function that carries out pairing of the fob
- *
- * @param fob_state_ram pointer to the current fob state in ram
+ * @brief Function that pairs this fob,
+ * becoming a paired fob device
+ * rather than an unpaired fob device.
  */
 void uPairFob(void)
 {
@@ -280,8 +316,7 @@ void uPairFob(void)
 
 /**
  * @brief Function that handles enabling a new feature on the fob
- *
- * @param fob_state_ram pointer to the current fob state in ram
+ * by storing the package according to its feature number.
  */
 void enableFeature(void)
 {
@@ -370,11 +405,23 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   ZERO(priv);
 }
 
+/**
+ * @brief Load fob data from FLASH into RAM
+ * 
+ * @param fob_data [out] The fob data structure to write
+ */
 void loadFobState(FOB_DATA *fob_data)
 {
   memcpy(fob_data, FOB_FLASH, sizeof(FOB_DATA));
 }
 
+/**
+ * @brief Saves fob data structure into FLASH
+ * 
+ * @param fob_data [in] The fob data structure to save
+ * 
+ * @return true if operation succeeds, false if an eeprom error occurs
+ */
 bool saveFobState(FOB_DATA *fob_data)
 {
   return

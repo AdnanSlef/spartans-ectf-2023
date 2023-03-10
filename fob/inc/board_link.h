@@ -17,18 +17,16 @@
 #include "firmware.h"
 
 #define UNLOCK_MAGIC 0x56
+
 #define BOARD_UART ((uint32_t)UART1_BASE)
 #define CAR_UART BOARD_UART
 #define PFOB_UART BOARD_UART
 #define UFOB_UART BOARD_UART
 
-/**
- * @brief Set the up board link object
- *
- * UART 1 is used to communicate between boards
- */
+// Setup Functions
 void setup_board_link(void);
 
+// Communications Functions
 void request_unlock(void);
 void get_challenge(CHALLENGE *challenge);
 void finalize_unlock(RESPONSE *response);
