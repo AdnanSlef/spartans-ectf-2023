@@ -23,6 +23,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/systick.h"
 #include "driverlib/timer.h"
 
 #include "sb_all.h"
@@ -43,6 +44,7 @@ uint8_t debounce_sw_state = GPIO_PIN_4;
 uint8_t current_sw_state = GPIO_PIN_4;
 // CSPRNG State
 sb_hmac_drbg_state_t drbg;
+bool DRBG_INITIALIZED = false;
 
 /**
  * @brief Main function for the Secure Fob design
@@ -72,10 +74,9 @@ int main(void)
     
   }
 
-  // Initialize DRBG
-  if (!init_drbg()) {
-    return -1;
-  }
+  // Initialize SysTick
+  SysTickPeriodSet(16000000);
+  SysTickEnable();
 
   // Initialize HOST UART
   uart_init();
@@ -150,6 +151,7 @@ bool init_drbg(void)
 {
   ENTROPY temp_entropy;
   sb_sw_private_t car_privkey;
+  volatile uint32_t tick;
 
   // Check for Entropy Error
   if(((uint32_t*)ENTROPY_FLASH)[0] == ((uint32_t*)ENTROPY_FLASH)[1] &&
@@ -158,10 +160,11 @@ bool init_drbg(void)
      return false;
 
   // Initialize DRBG
+  tick = SysTickValueGet();
   if(!(
     get_secret(&car_privkey, NULL) &&
-    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), (sb_byte_t *)&car_privkey, sizeof(sb_sw_private_t), (sb_byte_t *)"Spartans", 8) == SB_SUCCESS
-    )) return false;
+    sb_hmac_drbg_init(&drbg, (void *)ENTROPY_FLASH, sizeof(ENTROPY), (sb_byte_t *)&car_privkey, sizeof(sb_sw_private_t), (sb_byte_t *)&tick, sizeof(tick)) == SB_SUCCESS
+  )) return false;
 
   // Clear private key
   ZERO(car_privkey);
@@ -344,6 +347,12 @@ void gen_response(CHALLENGE *challenge, RESPONSE *response)
   sb_sw_context_t sb_ctx;
   sb_sw_message_digest_t _hash;
   sb_sw_private_t priv;
+
+  // Initialize DRBG
+  if (!DRBG_INITIALIZED) {
+    if(!init_drbg()) return;
+    DRBG_INITIALIZED = true;
+  }
 
   // Only paired fobs respond to challenges
   if(!PFOB) return;
