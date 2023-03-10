@@ -47,6 +47,8 @@ bool DRBG_INITIALIZED = false;
  *
  * Initializes the device and peripherals,
  * then enters an infinite loop of handling unlock requests.
+ * 
+ * @return -1 if an error occurs.
  */
 int main(void)
 {
@@ -84,7 +86,12 @@ int main(void)
 }
 
 /**
- * @brief Function that handles unlocking of car
+ * @brief Function handles unlock requests by
+ * calling the appropriate functions in sequence
+ * as long as no failure occurs.
+ * 
+ * @return true if car was successfully unlocked and started,
+ *         false if no unlock was requested or an error occured
  */
 bool tryUnlock(void) {
   CHALLENGE challenge;
@@ -117,6 +124,11 @@ bool tryUnlock(void) {
   startCar(&response);
 }
 
+/**
+ * @brief Initialize the CSPRNG.
+ * 
+ * @return true if operation succeeds, false if an error occurs
+ */
 bool init_drbg(void)
 {
   ENTROPY temp_entropy;
@@ -163,14 +175,12 @@ bool init_drbg(void)
  * 
  * @param challenge [out] The challenge being written
  * 
- * @return `true` if challenge was successfully generated
+ * @return true if challenge was successfully generated, false if an error occurred
  */
 bool gen_challenge(CHALLENGE *challenge) {
   // Initialize DRBG
   if (!DRBG_INITIALIZED) {
-    if(!init_drbg()) {
-      return -1;
-    }
+    if(!init_drbg()) return false;
     DRBG_INITIALIZED = true;
   }
   return sb_hmac_drbg_generate(&drbg, (sb_byte_t *)challenge, sizeof(CHALLENGE)) == SB_SUCCESS;
@@ -183,7 +193,7 @@ bool gen_challenge(CHALLENGE *challenge) {
  * @param challenge [in] The challenge which was sent to the secure fob device
  * @param response  [in] The response to validate
  * 
- * @return `true` if response is valid
+ * @return true if response is valid, false otherwise
  */
 bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   sb_sw_context_t sb_ctx;
@@ -223,6 +233,12 @@ bool verify_response(CHALLENGE *challenge, RESPONSE *response) {
   return true;
 }
 
+/**
+ * @brief Unlock the secure car device,
+ * sending the unlock message to the Host.
+ * 
+ * @return true if operation succeeds, false if an error occurs
+ */
 bool unlockCar(void) {
   uint8_t eeprom_message[UNLOCK_EEPROM_SIZE];
 
@@ -246,7 +262,12 @@ bool unlockCar(void) {
 }
 
 /**
- * @brief Function that handles starting of car - feature list
+ * @brief Start the secure car device after unlock,
+ * sending the feature messages for each enabled feature to the Host.
+ * 
+ * @param response [in] The challenge response offered by the fob
+ * 
+ * @return true if operation succeeds, false if an error occurs
  */
 bool startCar(RESPONSE *response) {
   uint32_t i;

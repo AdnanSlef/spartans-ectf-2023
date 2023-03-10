@@ -20,17 +20,17 @@
 #define UNLOCK_MAGIC 0x56
 #define CHAL_START 0x57
 #define RESP_START 0x58
+
 #define FOB_UART ((uint32_t)UART1_BASE)
 
-/**
- * @brief Set the up board link object
- *
- * UART 1 is used to communicate between boards
- */
+// Setup Functions
 void setup_board_link(void);
 
+// Communications Functions
 bool send_challenge(CHALLENGE *challenge);
 bool fob_requests_unlock(void);
+
+// Advanced Communications Functions
 bool get_response(RESPONSE *response);
 
 #endif

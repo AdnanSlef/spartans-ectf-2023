@@ -32,22 +32,27 @@
 #define ENDIAN 1
 
 /*** Structure definitions ***/
+// Defines a struct for a packaged feature
 typedef sb_sw_signature_t PACKAGE;
 
+// Defines a struct for the challenge in the challenge-response mechanism
 typedef struct {
   uint8_t data[64];
 } CHALLENGE;
 
+// Defines a struct for the response in the challenge-response mechanism
 typedef struct {
   sb_sw_signature_t unlock;
   PACKAGE feature[3];
 } RESPONSE;
 
+// Defines a struct for storing the car data
 typedef struct {
   sb_sw_public_t host_pubkey;
   sb_sw_public_t car_pubkey;
 } CAR_DATA;
 
+// Defines a struct for storing entropy in flash
 typedef struct {
   uint8_t data[0x400];
 } ENTROPY;

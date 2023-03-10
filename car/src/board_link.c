@@ -29,9 +29,9 @@
 #include "firmware.h"
 
 /**
- * @brief Set the up board link object
+ * @brief Initialize the board link interface.
  *
- * UART 1 is used to communicate between boards
+ * UART 1 is used to communicate with key fob devices.
  */
 void setup_board_link(void) {
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
@@ -62,7 +62,11 @@ bool fob_requests_unlock(void) {
 }
 
 /**
- * @brief Send a challenge-respones challenge to the secure fob device
+ * @brief Send a challenge-response challenge to the key fob device
+ * 
+ * @param challenge [in] The challenge to send
+ * 
+ * @return true once challenge has been sent
 */
 bool send_challenge(CHALLENGE *challenge) {
   uart_writeb(FOB_UART, CHAL_START);
@@ -72,9 +76,11 @@ bool send_challenge(CHALLENGE *challenge) {
 
 /**
  * @brief Gets a response from the fob to the challenge that was sent
- * Times out after 1 second
+ * 
+ * Times out after 1 second.
  *
- * @param response [out] where to store the gathered response
+ * @param response [out] Where to store the gathered response
+ * 
  * @return bool true if response is received timely, false otherwise
  */
 bool get_response(RESPONSE *response) {

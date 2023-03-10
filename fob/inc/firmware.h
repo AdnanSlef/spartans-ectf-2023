@@ -51,13 +51,15 @@
 #define FOB_FLASH ((FOB_DATA *)FOB_STATE_PTR)
 
 /*** Structure definitions ***/
+// Defines a struct for a packaged feature
 typedef sb_sw_signature_t PACKAGE;
 
+// Defines a struct for the challenge in the challenge-response mechanism
 typedef struct {
   uint8_t data[64];
 } CHALLENGE;
 
-// Defines a struct of the response for the challenge-response mechanism
+// Defines a struct for the response in the challenge-response mechanism
 typedef struct {
   sb_sw_signature_t unlock;
   PACKAGE feature[3];
@@ -90,6 +92,8 @@ void pPairFob(void);
 void uPairFob(void);
 void enableFeature(void);
 void unlockCar(void);
+
+// Security Functions
 void gen_response(CHALLENGE *challenge, RESPONSE *response);
 
 // Helper functions

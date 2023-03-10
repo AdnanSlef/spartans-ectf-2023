@@ -30,25 +30,12 @@
  * UART 0 is used to communicate with the host computer.
  */
 void uart_init(void) {
-  // Configure the UART peripherals used in this example
-  // RCGC   Run Mode Clock Gating
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0); // UART 0 for host interface
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); // UART 0 is on GPIO Port A
-  // HBCTL  High-performance Bus Control
-  // PCTL   Port Control
+  
   GPIOPinConfigure(GPIO_PA0_U0RX);
   GPIOPinConfigure(GPIO_PA1_U0TX);
-  // DIR    Direction
-  // AFSEL  Alternate Function Select
-  // DR2R   2-mA Drive Select
-  // DR4R   4-mA Drive Select
-  // DR8R   8-mA Drive Select
-  // SLR    Slew Rate Control Select
-  // ODR    Open Drain Select
-  // PUR    Pull-Up Select
-  // PDR    Pull-Down Select
-  // DEN    Digital Enable
-  // AMSEL  Analog Mode Select
+  
   GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
   // Configure the UART for 115,200, 8-N-1 operation.
@@ -101,6 +88,7 @@ void uart_writeb(uint32_t uart, uint8_t data) { UARTCharPut(uart, data); }
 
 /**
  * @brief Write a sequence of bytes to a UART interface.
+ * Delays a short time so as not to fill any UART FIFO.
  *
  * @param uart is the base address of the UART port to write to.
  * @param buf is a pointer to the data to send.
